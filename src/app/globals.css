@@ -541,9 +541,32 @@ a {
   z-index: -1;
 }
 
+/* Desktop: the photo lives in the right part of the screen and fades in from the left,
+   so the face never sits under the name. */
 @media (min-width: 900px) {
+  /* Box matches the portrait shape (16:9) so it is never zoomed in; it sits on the
+     right, vertically centred, and is sized to leave room for the name. */
+  .hero-media {
+    inset: auto 0 auto auto;
+    top: 50%;
+    width: min(68vw, calc(100svh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    translate: 0 -50%;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 35%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 35%);
+  }
   .hero-slide img {
-    --hero-pos: right 30%;
+    --hero-pos: right center;
+  }
+}
+
+/* Phone: the photo fills the top of the screen; the text sits below the face. */
+@media (max-width: 899px) {
+  .hero-media {
+    bottom: 38%;
+  }
+  .hero-slide img {
+    --hero-pos: 66% 30%;
   }
 }
 
@@ -573,13 +596,20 @@ a {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to top, var(--paper) 0%, color-mix(in oklab, var(--paper) 55%, transparent) 30%, transparent 60%),
-    linear-gradient(to right, var(--paper) 0%, var(--paper) 30%, color-mix(in oklab, var(--paper) 60%, transparent) 48%, transparent 70%);
+    linear-gradient(to top, var(--paper) 0%, color-mix(in oklab, var(--paper) 55%, transparent) 25%, transparent 50%);
+}
+
+@media (min-width: 900px) {
+  .hero-media::after {
+    background:
+      linear-gradient(to top, var(--paper) 0%, transparent 32%),
+      linear-gradient(to bottom, var(--paper) 0%, transparent 30%);
+  }
 }
 
 @media (max-width: 899px) {
   .hero-media::after {
-    background: linear-gradient(to top, var(--paper) 8%, color-mix(in oklab, var(--paper) 70%, transparent) 45%, color-mix(in oklab, var(--paper) 25%, transparent) 100%);
+    background: linear-gradient(to top, var(--paper) 0%, color-mix(in oklab, var(--paper) 60%, transparent) 30%, transparent 60%);
   }
 }
 
