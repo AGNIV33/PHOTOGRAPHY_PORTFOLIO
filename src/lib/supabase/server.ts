@@ -2,7 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
-import { supabaseAnonKey, supabaseUrl } from "@/lib/env";
+import { supabaseAnonKey, supabaseSecretKey, supabaseUrl } from "@/lib/env";
 
 // Acts as the signed-in visitor (or anonymous). Row level security applies.
 export async function createClient() {
@@ -23,7 +23,7 @@ export async function createClient() {
 
 // Full access with the secret key. Only call after checking the user is an admin.
 export function createAdminClient() {
-  return createPlainClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY ?? "", {
+  return createPlainClient(supabaseUrl, supabaseSecretKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

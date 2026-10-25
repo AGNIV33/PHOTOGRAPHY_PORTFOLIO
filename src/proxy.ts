@@ -1,10 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { publicSupabaseKey, publicSupabaseUrl } from "@/lib/supabase/public-env";
 
 // Keeps the visitor's sign-in session fresh on every page request.
 export async function proxy(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = publicSupabaseUrl;
+  const key = publicSupabaseKey;
   if (!url || !key) return NextResponse.next();
 
   let response = NextResponse.next({ request });

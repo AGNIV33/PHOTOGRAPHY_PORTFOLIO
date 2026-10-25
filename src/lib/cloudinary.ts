@@ -1,11 +1,12 @@
 import "server-only";
 import { v2 as cloudinary } from "cloudinary";
 import { site } from "@/config/site";
+import { cloudinaryEnv } from "@/lib/env";
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: cloudinaryEnv.cloudName,
+  api_key: cloudinaryEnv.apiKey,
+  api_secret: cloudinaryEnv.apiSecret,
   secure: true,
 });
 
@@ -26,13 +27,13 @@ export function signUpload() {
   };
   const signature = cloudinary.utils.api_sign_request(
     params,
-    process.env.CLOUDINARY_API_SECRET ?? "",
+    cloudinaryEnv.apiSecret,
   );
   return {
     ...params,
     signature,
-    apiKey: process.env.CLOUDINARY_API_KEY ?? "",
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? "",
+    apiKey: cloudinaryEnv.apiKey,
+    cloudName: cloudinaryEnv.cloudName,
   };
 }
 
