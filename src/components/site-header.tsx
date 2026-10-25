@@ -8,34 +8,32 @@ import { site } from "@/config/site";
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const overlay = pathname === "/";
 
-  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (match: readonly string[]) =>
+    match.some((m) => (m === "/" ? pathname === "/" : pathname === m || pathname.startsWith(`${m}/`)));
 
   return (
-    <header className="site-header">
+    <header className="site-header" data-overlay={overlay ? "" : undefined}>
       <div className="wrap bar">
         <Link href="/" className="wordmark" onClick={() => setOpen(false)}>
           {site.name}
-          <span className="label">{site.role}</span>
+          <span className="sep" aria-hidden="true" />
+          <span className="sub">Photography</span>
         </Link>
 
-        <nav className="nav" aria-label="Main">
-          {site.nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive(item.href) ? "page" : undefined}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
         <div className="header-actions">
-          {/* Visitor sign-in arrives in Phase 4. */}
-          <Link href="/signin" className="signin">
-            Sign in
-          </Link>
+          <nav className="nav" aria-label="Main">
+            {site.nav.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={isActive(item.match) ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
           <button
             type="button"
             className="menu-btn"
@@ -50,17 +48,20 @@ export function SiteHeader() {
 
       {open && (
         <nav id="mobile-nav" className="wrap mobile-nav" aria-label="Main">
-          {site.nav.map((item, i) => (
+          {[...site.nav, ...site.more.filter((m) => m.href !== "/gallery")].map((item, i) => (
             <Link
-              key={item.href}
+              key={item.href + item.label}
               href={item.href}
-              aria-current={isActive(item.href) ? "page" : undefined}
+              aria-current={pathname === item.href ? "page" : undefined}
               onClick={() => setOpen(false)}
             >
               {item.label}
               <span className="frame-no">{String(i + 1).padStart(2, "0")}</span>
             </Link>
           ))}
+          <Link href="/signin" onClick={() => setOpen(false)}>
+            Sign in
+          </Link>
         </nav>
       )}
     </header>

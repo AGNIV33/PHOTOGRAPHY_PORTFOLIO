@@ -1,0 +1,7 @@
+Put the landing page photos here:
+
+hero-1.jpg  the portrait (required)
+hero-2.jpg  optional second slide
+hero-3.jpg  optional third slide
+
+.jpg, .jpeg, .png or .webp all work. Keep the long side around 2400px.
