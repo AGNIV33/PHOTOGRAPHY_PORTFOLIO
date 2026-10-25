@@ -30,7 +30,7 @@ export function Hero({ images, slots }: { images: string[]; slots: number }) {
             <span className="label">
               Portrait goes here
               <br />
-              public/hero/hero-1.jpg
+              Drop a photo into public/hero
             </span>
           </div>
         ) : (

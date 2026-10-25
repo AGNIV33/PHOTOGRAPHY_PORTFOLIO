@@ -1,7 +1,6 @@
-Put the landing page photos here:
+Put the landing page photos here (.jpg, .jpeg, .png or .webp).
 
-hero-1.jpg  the portrait (required)
-hero-2.jpg  optional second slide
-hero-3.jpg  optional third slide
+Any file name works. The first file by name is the main portrait;
+up to 3 files become slides. To control the order, start names with 1-, 2-, 3-.
 
-.jpg, .jpeg, .png or .webp all work. Keep the long side around 2400px.
+Keep the long side around 2400px.
