@@ -213,9 +213,12 @@ a {
   transition: color 160ms var(--ease);
 }
 
-.nav a:hover,
-.nav a[aria-current="page"] {
+.nav a:hover {
   color: var(--ink);
+}
+
+.nav a[aria-current="page"] {
+  color: var(--safelight);
 }
 
 .nav a::after {
@@ -527,9 +530,11 @@ a {
 
 /* ---------- Landing hero ---------- */
 
+/* The whole hero composition fits one screen, laptop included. */
 .hero {
   position: relative;
-  min-height: 100svh;
+  height: 100svh;
+  min-height: 600px;
   display: grid;
   overflow: hidden;
   isolation: isolate;
@@ -548,12 +553,12 @@ a {
      right, vertically centred, and is sized to leave room for the name. */
   .hero-media {
     inset: auto 0 auto auto;
-    top: 50%;
-    width: min(68vw, calc(100svh * 16 / 9));
+    top: 46%;
+    width: min(76vw, calc(100svh * 16 / 9 * 1.05));
     aspect-ratio: 16 / 9;
     translate: 0 -50%;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 35%);
-    mask-image: linear-gradient(to right, transparent 0%, #000 35%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 32%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 32%);
   }
   .hero-slide img {
     --hero-pos: right center;
@@ -563,7 +568,9 @@ a {
 /* Phone: the photo fills the top of the screen; the text sits below the face. */
 @media (max-width: 899px) {
   .hero-media {
-    bottom: 38%;
+    bottom: 34%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
   }
   .hero-slide img {
     --hero-pos: 66% 30%;
@@ -602,8 +609,8 @@ a {
 @media (min-width: 900px) {
   .hero-media::after {
     background:
-      linear-gradient(to top, var(--paper) 0%, transparent 32%),
-      linear-gradient(to bottom, var(--paper) 0%, transparent 30%);
+      linear-gradient(to top, var(--paper) 0%, color-mix(in oklab, var(--paper) 70%, transparent) 18%, transparent 46%),
+      linear-gradient(to bottom, var(--paper) 0%, transparent 22%);
   }
 }
 
@@ -641,14 +648,16 @@ a {
 .hero-content {
   align-self: end;
   display: grid;
-  gap: clamp(18px, 2.4vw, 28px);
-  padding-block: 120px clamp(110px, 16vh, 170px);
+  gap: clamp(12px, 2svh, 22px);
+  padding-block: 96px clamp(96px, 14svh, 140px);
 }
 
+/* Desktop: content is centred in the space between the header and the slide counter,
+   nudged up so the button keeps clear of the bottom edge. */
 @media (min-width: 900px) {
   .hero-content {
     align-self: center;
-    padding-block: 120px;
+    padding-block: 72px 112px;
   }
 }
 
@@ -670,9 +679,12 @@ a {
   background: var(--safelight);
 }
 
+/* Sized by both width and height so the two-line name never pushes the CTA off a short laptop screen. */
 .hero-name {
-  font-size: clamp(72px, 12.5vw, 196px);
+  font-size: clamp(64px, min(10.8vw, 16.5svh), 168px);
+  line-height: 0.84;
   color: var(--ink);
+  margin-block: 4px 2px;
 }
 
 .hero-name span {
@@ -680,15 +692,15 @@ a {
 }
 
 .hero-role {
-  font-size: clamp(14px, 1.6vw, 20px);
+  font-size: clamp(13px, 1.3vw, 17px);
   color: var(--safelight);
 }
 
 .hero-tagline {
-  font-size: clamp(22px, 2.3vw, 30px);
-  line-height: 1.3;
+  font-size: clamp(19px, min(1.7vw, 3svh), 24px);
+  line-height: 1.35;
   color: var(--ink-2);
-  max-width: 22ch;
+  max-width: 24ch;
 }
 
 .explore {
@@ -696,29 +708,32 @@ a {
   align-items: center;
   gap: 18px;
   width: fit-content;
-  margin-top: 8px;
+  margin-top: clamp(4px, 1.5svh, 14px);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.28em;
   text-transform: uppercase;
 }
 
+/* Bronze-outlined circular arrow button */
 .explore .circle {
   display: grid;
   place-items: center;
   width: 52px;
   height: 52px;
-  border: 1px solid color-mix(in oklab, var(--ink) 45%, transparent);
+  color: var(--safelight);
+  border: 1px solid var(--safelight);
   border-radius: 50%;
   transition:
     background 220ms var(--ease),
-    border-color 220ms var(--ease),
+    color 220ms var(--ease),
     transform 220ms var(--ease);
 }
 
-.explore:hover .circle {
+.explore:hover .circle,
+.explore:focus-visible .circle {
   background: var(--safelight);
-  border-color: var(--safelight);
+  color: var(--paper);
   transform: translateX(4px);
 }
 

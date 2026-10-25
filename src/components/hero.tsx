@@ -41,7 +41,7 @@ export function Hero({ images, slots }: { images: string[]; slots: number }) {
                 alt={i === 0 ? `Portrait of ${site.name}` : ""}
                 fill
                 priority={i === 0}
-                sizes="(min-width: 900px) 62vw, 100vw"
+                sizes="(min-width: 900px) 80vw, 100vw"
                 draggable={false}
               />
             </div>
