@@ -5,12 +5,18 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { site } from "@/config/site";
 
+// The current path is only known at request time, so the header renders once without it
+// (static shell) and again with it.
 export function SiteHeader() {
-  const pathname = usePathname();
+  return <SiteHeaderView pathname={usePathname()} />;
+}
+
+export function SiteHeaderView({ pathname }: { pathname: string | null }) {
   const [open, setOpen] = useState(false);
   const overlay = pathname === "/";
 
   const isActive = (match: readonly string[]) =>
+    pathname !== null &&
     match.some((m) => (m === "/" ? pathname === "/" : pathname === m || pathname.startsWith(`${m}/`)));
 
   return (

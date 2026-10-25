@@ -1,11 +1,68 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { Hero } from "@/components/hero";
 import { PhotoFrame } from "@/components/photo-frame";
+import { PhotoGrid } from "@/components/photo-tile";
+import { ProtectedImage } from "@/components/protected-image";
+import { getUser } from "@/lib/auth";
+import { isBackendReady } from "@/lib/env";
 import { getHeroImages, HERO_SLOTS } from "@/lib/hero-images";
+import { listAlbums, listPhotos } from "@/lib/photos";
 import { albumSlots, frames } from "@/lib/placeholders";
 
+function PlaceholderSheet() {
+  return (
+    <div className="sheet">
+      {frames.slice(0, 6).map((f) => (
+        <PhotoFrame key={f.id} number={f.id} orientation={f.orientation} />
+      ))}
+    </div>
+  );
+}
+
+// Newest open photos first, so the home page is never a wall of locked tiles.
+async function RecentFrames() {
+  if (!isBackendReady) return <PlaceholderSheet />;
+  const user = await getUser();
+  const photos = await listPhotos(user, { limit: 24 });
+  const open = photos.filter((p) => !p.locked).slice(0, 6);
+  if (open.length === 0) return <PlaceholderSheet />;
+  return <PhotoGrid photos={open} />;
+}
+
+async function AlbumRows() {
+  const user = isBackendReady ? await getUser() : null;
+  const albums = isBackendReady ? (await listAlbums(user)).filter((a) => a.count > 0) : [];
+  const rows = albums.length
+    ? albums.map((a) => ({ key: a.id, href: `/albums/${a.slug}`, title: a.title, cover: a.cover }))
+    : albumSlots.map((a) => ({ key: a.id, href: "/albums", title: a.title, cover: null }));
+  return (
+    <ol>
+      {rows.map((a, i) => (
+        <li key={a.key} className="border-b border-[var(--hairline)]">
+          <Link
+            href={a.href}
+            className="group grid grid-cols-[48px_1fr_auto] md:grid-cols-[80px_1fr_220px] items-center gap-4 py-6"
+          >
+            <span className="frame-no">{String(i + 1).padStart(2, "0")}</span>
+            <span className="display text-[clamp(30px,4.5vw,60px)] transition-transform duration-300 group-hover:translate-x-3">
+              {a.title}
+            </span>
+            <span className="hidden md:block">
+              {a.cover?.thumb ? (
+                <ProtectedImage src={a.cover.thumb} alt="" width={a.cover.width} height={a.cover.height} className="album-row-cover" />
+              ) : (
+                <PhotoFrame number={String(i + 1).padStart(2, "0")} orientation="landscape" caption="Cover" />
+              )}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export default function Home() {
-  const selected = frames.slice(0, 6);
 
   return (
     <>
@@ -27,11 +84,9 @@ export default function Home() {
             </span>
           </Link>
         </div>
-        <div className="sheet">
-          {selected.map((f) => (
-            <PhotoFrame key={f.id} number={f.id} orientation={f.orientation} />
-          ))}
-        </div>
+        <Suspense fallback={<PlaceholderSheet />}>
+          <RecentFrames />
+        </Suspense>
       </section>
 
       {/* Albums: each series gets a long row */}
@@ -40,24 +95,9 @@ export default function Home() {
           <span className="kicker">Series</span>
           <h2 className="display text-[clamp(44px,7vw,96px)]">Albums</h2>
         </div>
-        <ol>
-          {albumSlots.map((a, i) => (
-            <li key={a.id} className="border-b border-[var(--hairline)]">
-              <Link
-                href="/albums"
-                className="group grid grid-cols-[48px_1fr_auto] md:grid-cols-[80px_1fr_220px] items-center gap-4 py-6"
-              >
-                <span className="frame-no">{String(i + 1).padStart(2, "0")}</span>
-                <span className="display text-[clamp(30px,4.5vw,60px)] transition-transform duration-300 group-hover:translate-x-3">
-                  {a.title}
-                </span>
-                <span className="hidden md:block">
-                  <PhotoFrame number={`${a.id}1`} orientation="landscape" caption="Cover" />
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ol>
+        <Suspense fallback={null}>
+          <AlbumRows />
+        </Suspense>
       </section>
 
       {/* Members-only invitation */}
