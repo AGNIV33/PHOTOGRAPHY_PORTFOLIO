@@ -18,7 +18,7 @@ const TILT_X = [22, 18, 26, 20, 24, 16, 23]; // how far each photograph leans ba
 const TILT_Y = [-16, -10, -20, -12, -18, -8, -14]; // and turns towards the viewer
 const TILT_Z = [-5, 4, -3, 6, -4, 3, -6]; // and its own small sideways turn
 const GROW = Math.log(1.24); // each photograph up the line is 24% bigger than the one before
-const ANGLE = (26 * Math.PI) / 180; // slope of the line
+const ANGLE = (20 * Math.PI) / 180; // slope of the line
 const GAP = 0.26; // clear space between neighbours, as a share of their width
 const HOLD = 0.18; // share of each step where the row rests on a photograph
 // Spacing along the line so that, at every resting point, neighbours are exactly one gap apart
@@ -100,7 +100,7 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
       const H = st.clientHeight;
       const D = Math.min(W * 0.34, 600); // width of the photograph in focus
       const fx = W * 0.14; // where the photograph in focus sits, from the centre
-      const fy = H * 0.07;
+      const fy = -H * 0.06;
 
       let nearest = 0;
       let best = Infinity;
