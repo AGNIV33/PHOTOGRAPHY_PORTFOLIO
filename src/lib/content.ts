@@ -65,6 +65,7 @@ export type Settings = {
   email: string;
   instagram: string;
   facebook: string;
+  whatsapp: string;
 };
 
 const POST_FIELDS =
@@ -167,6 +168,7 @@ const DEFAULT_SETTINGS: Settings = {
   email: "",
   instagram: site.social.find((s) => s.label === "Instagram")?.href ?? "",
   facebook: site.social.find((s) => s.label === "Facebook")?.href ?? "",
+  whatsapp: "",
 };
 
 export async function getSettings(): Promise<Settings> {
@@ -176,24 +178,26 @@ export async function getSettings(): Promise<Settings> {
   if (!isSupabaseConfigured) return DEFAULT_SETTINGS;
   const { data } = await publicClient()
     .from("site_settings")
-    .select("about, city, email, instagram, facebook")
+    .select("*")
     .eq("id", 1)
     .maybeSingle();
   if (!data) return DEFAULT_SETTINGS;
   // Empty boxes in the dashboard fall back to the defaults.
-  const s = data as Settings;
+  const s = { ...DEFAULT_SETTINGS, ...(data as Partial<Settings>) };
   return {
     about: s.about || DEFAULT_SETTINGS.about,
     city: s.city || DEFAULT_SETTINGS.city,
     email: s.email || DEFAULT_SETTINGS.email,
     instagram: s.instagram || DEFAULT_SETTINGS.instagram,
     facebook: s.facebook || DEFAULT_SETTINGS.facebook,
+    whatsapp: s.whatsapp || DEFAULT_SETTINGS.whatsapp,
   };
 }
 
 export function socialLinks(s: Settings) {
   return [
     { label: "Instagram", href: s.instagram },
+    { label: "WhatsApp", href: s.whatsapp },
     { label: "Facebook", href: s.facebook },
   ];
 }
@@ -225,10 +229,13 @@ export async function adminListGear() {
 }
 
 export async function adminGetSettings(): Promise<Settings> {
-  const { data } = await createAdminClient()
-    .from("site_settings")
-    .select("about, city, email, instagram, facebook")
-    .eq("id", 1)
-    .maybeSingle();
-  return (data as Settings | null) ?? { about: "", city: "", email: "", instagram: "", facebook: "" };
+  const { data } = await createAdminClient().from("site_settings").select("*").eq("id", 1).maybeSingle();
+  return { about: "", city: "", email: "", instagram: "", facebook: "", whatsapp: "", ...((data as Partial<Settings> | null) ?? {}) };
+}
+
+// The year for the footer. Cached for a day so the page can still be prerendered.
+export async function currentYear(): Promise<number> {
+  "use cache";
+  cacheLife("days");
+  return new Date().getFullYear();
 }

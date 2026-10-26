@@ -513,24 +513,189 @@ a {
 .site-footer {
   margin-top: var(--space-7);
   border-top: 1px solid var(--hairline);
-  padding-block: var(--space-5);
+  padding-block: var(--space-6) var(--space-4);
   font-size: 14px;
   color: var(--ink-2);
 }
 
-.site-footer .cols {
-  display: grid;
+.site-footer a:hover {
+  color: var(--ink);
+}
+
+.footer-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
   gap: var(--space-4);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.footer-headline {
+  font-size: clamp(38px, 5.6vw, 76px);
+  line-height: 1.02;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.footer-headline em {
+  font-style: italic;
+  color: var(--safelight);
+}
+
+.footer-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--safelight);
+  border-bottom: 1px solid var(--safelight);
+  transition: gap 220ms var(--ease), color 160ms var(--ease);
+}
+
+.site-footer a.footer-cta:hover {
+  gap: 14px;
+  color: var(--ink);
+}
+
+.footer-cols {
+  display: grid;
+  gap: var(--space-5);
+  padding-block: var(--space-5);
+  border-bottom: 1px solid var(--hairline);
 }
 
 @media (min-width: 768px) {
-  .site-footer .cols {
-    grid-template-columns: 2fr 1fr 1fr;
+  .footer-cols {
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: var(--space-5) var(--space-6);
   }
 }
 
-.site-footer a:hover {
+.footer-brand {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.footer-name {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.footer-name img {
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+.footer-name .display {
+  font-size: 34px;
   color: var(--ink);
+}
+
+.footer-role {
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.footer-tagline {
+  max-width: 34ch;
+  margin-top: var(--space-2);
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 22px;
+  line-height: 1.25;
+  color: var(--ink-2);
+}
+
+.footer-social {
+  display: flex;
+  gap: 10px;
+  margin-top: var(--space-3);
+}
+
+.social-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  color: var(--ink-2);
+  transition: color 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease);
+}
+
+a.social-icon:hover,
+a.social-icon:focus-visible {
+  color: var(--paper);
+  background: var(--safelight);
+  border-color: var(--safelight);
+}
+
+.social-icon[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.footer-col {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.footer-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--safelight);
+}
+
+.footer-label::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: var(--safelight);
+}
+
+.footer-col a {
+  width: fit-content;
+  font-size: 15px;
+  transition: color 160ms var(--ease), transform 220ms var(--ease);
+}
+
+.footer-col a:hover {
+  transform: translateX(4px);
+}
+
+.footer-off {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding-top: var(--space-4);
+  font-size: 13px;
+  color: var(--muted);
 }
 
 /* ---------- Motion ---------- */
@@ -1826,7 +1991,8 @@ select.field {
 }
 
 .account-signin {
-  display: inline-flex;
+  display: none; /* on phones, Sign in is in the menu */
+  white-space: nowrap;
   align-items: center;
   min-height: 36px;
   padding: 0 14px;
@@ -1836,6 +2002,12 @@ select.field {
   text-transform: uppercase;
   border: 1px solid var(--hairline);
   transition: border-color 160ms var(--ease), color 160ms var(--ease);
+}
+
+@media (min-width: 640px) {
+  .account-signin {
+    display: inline-flex;
+  }
 }
 
 .account-signin:hover {

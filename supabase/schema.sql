@@ -266,3 +266,6 @@ alter table public.achievements add column if not exists link_site text not null
 alter table public.achievements add column if not exists link_title text not null default '';
 alter table public.achievements add column if not exists link_description text not null default '';
 alter table public.achievements add column if not exists link_image text not null default '';
+
+-- Footer: a WhatsApp link next to Instagram and Facebook.
+alter table public.site_settings add column if not exists whatsapp text not null default '';

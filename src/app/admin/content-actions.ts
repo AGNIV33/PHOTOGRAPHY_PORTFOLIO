@@ -25,6 +25,19 @@ function webLink(raw: string, what: string) {
   }
 }
 
+// A WhatsApp link, or just a phone number with the country code (91 98765 43210).
+function whatsappLink(raw: string) {
+  const s = text(raw, 500);
+  if (!s) return "";
+  if (/^\+?[\d\s()-]{7,20}$/.test(s)) return `https://wa.me/${s.replace(/\D/g, "")}`;
+  const link = webLink(s, "WhatsApp");
+  const host = new URL(link).hostname.replace(/^www\./, "");
+  if (host !== "wa.me" && host !== "whatsapp.com" && !host.endsWith(".whatsapp.com")) {
+    throw new Error("The WhatsApp link should start with wa.me or whatsapp.com, or write just the phone number.");
+  }
+  return link;
+}
+
 type Table = "achievements" | "gear";
 
 async function nextPosition(table: Table) {
@@ -262,6 +275,7 @@ export async function saveSettings(input: Settings) {
       email,
       instagram: webLink(input.instagram, "Instagram"),
       facebook: webLink(input.facebook, "Facebook"),
+      whatsapp: whatsappLink(input.whatsapp),
       updated_at: new Date().toISOString(),
     });
   if (error) throw new Error(error.message);
