@@ -1,3 +1,10 @@
+// If Supabase sends a sign-in link to the wrong page (it falls back to the "Site URL" when
+// the requested address isn't on its allowed list), the session arrives after "#" on that
+// page. Hand it to /auth/finish, which knows what to do with it.
+if (location.pathname !== "/auth/finish" && /(^|[#&])(access_token|error_code)=/.test(location.hash)) {
+  location.replace(`/auth/finish${location.search}${location.hash}`);
+}
+
 // Runs in the browser before React hydrates the page.
 // Some browser extensions (e.g. Bitdefender's) stamp attributes like bis_skin_checked onto
 // every element, which Next.js reports as hydration "Issues" in development. Strip them as
