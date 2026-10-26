@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { bulkDeletePhotos, bulkEditPhotos, type BulkPatch } from "@/app/admin/actions";
 import { BW, COLOUR, STYLE_TAGS, canonicalTag, countPlaces, countTags, locationOf, sortedCategories } from "@/lib/categories";
 import { Select, SuggestInput } from "@/components/select";
@@ -56,6 +56,19 @@ export function PhotoManager({ photos, albums }: { photos: ManagedPhoto[]; album
   const tagsOnPicked = [...new Set(pickedPhotos.flatMap((p) => p.tags))];
   const allShownPicked = shown.length > 0 && shown.every((p) => picked.has(p.id));
   const suggestions = [...new Set([BW, COLOUR, ...categories.map(([n]) => n), ...STYLE_TAGS])];
+
+  // Escape closes the selection bar.
+  useEffect(() => {
+    if (!selecting) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setSelecting(false);
+      setPicked(new Set());
+      setPanel(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selecting]);
 
   function toggle(id: string) {
     setPicked((s) => {
@@ -221,6 +234,9 @@ export function PhotoManager({ photos, albums }: { photos: ManagedPhoto[]; album
               {allShownPicked ? "Unselect all" : `Select all ${shown.length} shown`}
             </button>
             {msg && <span className="text-[14px] text-[var(--ink-2)]" role="status">{msg}</span>}
+            <button type="button" className="org-close" onClick={stop} aria-label="Close and stop selecting" title="Close (Esc)">
+              ×
+            </button>
           </div>
           {ids.length === 0 ? (
             <p className="text-[14px] text-[var(--ink-2)]">Tap the photos you want to change. Then add them to a category, move them to an album, or change who can see them.</p>
