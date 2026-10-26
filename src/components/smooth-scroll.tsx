@@ -7,15 +7,15 @@ import { useEffect, useRef } from "react";
 
 // Smooth, eased scrolling across the public website (Lenis).
 // - Off for people who asked their device to reduce motion.
-// - Off in the dashboard, where plain scrolling is more dependable for forms.
+// - On everywhere, the dashboard included. Scrolling inside a list or a box that scrolls on
+//   its own (marked data-lenis-prevent, or a normal scrollable box) stays native.
 // - Paused while the loading iris is on screen, so the page can't be scrolled behind it.
 export function SmoothScroll() {
   const pathname = usePathname();
   const lenis = useRef<Lenis | null>(null);
-  const off = pathname.startsWith("/admin");
 
   useEffect(() => {
-    if (off || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let instance: Lenis;
     try {
       instance = new Lenis({ lerp: 0.1, smoothWheel: true });
@@ -39,7 +39,7 @@ export function SmoothScroll() {
       instance.destroy();
       lenis.current = null;
     };
-  }, [off]);
+  }, []);
 
   // A new page can be a different height.
   useEffect(() => {

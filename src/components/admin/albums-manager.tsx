@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createAlbum, deleteAlbum, moveAlbum, setAlbumCover, updateAlbum } from "@/app/admin/actions";
+import { AlbumUploaderPanel, useAlbumUploader } from "./album-uploader";
 
 type Album = {
   id: string;
@@ -19,6 +20,7 @@ function AlbumRowEditor({ album, index, total }: { album: Album; index: number; 
   const [story, setStory] = useState(album.story);
   const [msg, setMsg] = useState("");
   const [pending, start] = useTransition();
+  const ctl = useAlbumUploader();
   const run = (fn: () => Promise<unknown>, done?: string) =>
     start(async () => {
       try {
@@ -74,6 +76,34 @@ function AlbumRowEditor({ album, index, total }: { album: Album; index: number; 
         </div>
       )}
 
+      <details className="exif-details">
+        <summary>
+          <span className="label">Add photos or change the cover</span>
+          <span className="exif-summary">Many photos at once, or a separate cover picture from this computer.</span>
+        </summary>
+        <div className="grid gap-4 pt-3">
+          <AlbumUploaderPanel ctl={ctl} albumTitle={album.title} allowCoverOnly />
+          {ctl.hasContent && (
+            <div>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={ctl.busy || pending}
+                onClick={async () => {
+                  try {
+                    const r = await ctl.uploadInto(album.id);
+                    setMsg(r.added > 0 ? `Added ${r.added} photo${r.added === 1 ? "" : "s"}.` : "Cover changed.");
+                    router.refresh();
+                  } catch {}
+                }}
+              >
+                {ctl.busy ? "Uploading…" : ctl.items.length > 0 ? `Add ${ctl.items.length} photo${ctl.items.length === 1 ? "" : "s"} to this album` : "Save the cover picture"}
+              </button>
+            </div>
+          )}
+        </div>
+      </details>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-[14px] text-[var(--ink-2)]" role="status">{msg}</span>
         <div className="flex gap-3">
@@ -103,6 +133,7 @@ export function AlbumsManager({ albums }: { albums: Album[] }) {
   const [story, setStory] = useState("");
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
+  const ctl = useAlbumUploader();
 
   return (
     <div className="grid gap-10">
@@ -112,7 +143,8 @@ export function AlbumsManager({ albums }: { albums: Album[] }) {
           e.preventDefault();
           start(async () => {
             try {
-              await createAlbum(title, story);
+              const id = await createAlbum(title, story);
+              if (ctl.hasContent) await ctl.uploadInto(id);
               setTitle("");
               setStory("");
               setError("");
@@ -132,9 +164,10 @@ export function AlbumsManager({ albums }: { albums: Album[] }) {
           <span className="label">Story (optional)</span>
           <textarea className="field" rows={3} value={story} onChange={(e) => setStory(e.target.value)} />
         </label>
+        <AlbumUploaderPanel ctl={ctl} albumTitle={title} />
         <div className="flex items-center gap-4">
-          <button type="submit" className="btn btn-primary" disabled={pending}>
-            {pending ? "Creating…" : "Create album"}
+          <button type="submit" className="btn btn-primary" disabled={pending || ctl.busy}>
+            {pending || ctl.busy ? "Creating…" : ctl.items.length > 0 ? `Create album with ${ctl.items.length} photo${ctl.items.length === 1 ? "" : "s"}` : "Create album"}
           </button>
           {error && <span className="text-[var(--safelight)]">{error}</span>}
         </div>

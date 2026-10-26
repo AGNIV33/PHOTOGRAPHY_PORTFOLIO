@@ -23,6 +23,7 @@ export type PhotoRow = {
   album_id: string | null;
   visibility: Visibility;
   status: "draft" | "published";
+  tags: string[];
   created_at: string;
 };
 
@@ -59,7 +60,7 @@ export type CommentRow = {
 };
 
 const PHOTO_FIELDS =
-  "id, public_id, width, height, caption, place, taken_at, camera, lens, focal_length, aperture, shutter, iso, album_id, visibility, status, created_at";
+  "id, public_id, width, height, caption, place, taken_at, camera, lens, focal_length, aperture, shutter, iso, album_id, visibility, status, tags, created_at";
 
 // Members-only photos get no image link unless someone is signed in.
 export function toView(row: PhotoRow, user: User | null): PhotoView {
@@ -106,11 +107,21 @@ export async function listAlbums(user: User | null): Promise<AlbumView[]> {
     supabase.from("photos").select(PHOTO_FIELDS).eq("status", "published"),
   ]);
   const rows = (photos ?? []) as PhotoRow[];
-  return ((albums ?? []) as AlbumRow[]).map((a) => {
+  const albumRows = (albums ?? []) as AlbumRow[];
+  // A cover picture uploaded just for the album is a draft photo: never shown in the gallery,
+  // only as the cover. Only its id is looked up here, so nothing else about drafts is exposed.
+  const coverIds = albumRows.map((a) => a.cover_photo_id).filter((id): id is string => Boolean(id) && !rows.some((p) => p.id === id));
+  let coverOnly: PhotoRow[] = [];
+  if (coverIds.length > 0) {
+    const { data } = await createAdminClient().from("photos").select(PHOTO_FIELDS).in("id", coverIds).eq("visibility", "public");
+    coverOnly = (data ?? []) as PhotoRow[];
+  }
+  return albumRows.map((a) => {
     const inAlbum = rows.filter((p) => p.album_id === a.id);
     // Cover: the chosen photo, else the first open photo, so locked covers are rare.
     const coverRow =
       inAlbum.find((p) => p.id === a.cover_photo_id) ??
+      coverOnly.find((p) => p.id === a.cover_photo_id) ??
       inAlbum.find((p) => p.visibility === "public") ??
       inAlbum[0];
     return { ...a, count: inAlbum.length, cover: coverRow ? toView(coverRow, user) : null };

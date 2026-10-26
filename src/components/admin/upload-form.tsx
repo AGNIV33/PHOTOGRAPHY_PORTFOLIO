@@ -9,14 +9,17 @@ import {
   type PhotoInput,
 } from "@/app/admin/actions";
 import { Select } from "@/components/select";
+import { detectColour, fileRatio } from "@/lib/detect-colour";
 import { readCameraDetails } from "@/lib/exif";
 import { uploadToCloudinary } from "@/lib/upload-client";
 import { PhotoFields, type AlbumOption } from "./photo-fields";
+import { PreviewDialog } from "./preview-dialog";
 
 type Item = {
   key: string;
   file: File;
   preview: string;
+  ratio: number;
   input: PhotoInput;
   state: "ready" | "uploading" | "done" | "error";
   progress: number;
@@ -36,14 +39,16 @@ const blank: PhotoInput = {
   album_id: null,
   visibility: "public",
   status: "published",
+  tags: [],
 };
 
-export function UploadForm({ albums: initialAlbums }: { albums: AlbumOption[] }) {
+export function UploadForm({ albums: initialAlbums, knownTags }: { albums: AlbumOption[]; knownTags: string[] }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [albums, setAlbums] = useState(initialAlbums);
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   // Album and "who can see" chosen once at the top apply to every photo picked.
   const [shared, setShared] = useState({ album_id: null as string | null, visibility: "public" as PhotoInput["visibility"] });
 
@@ -56,12 +61,13 @@ export function UploadForm({ albums: initialAlbums }: { albums: AlbumOption[] })
       Array.from(files)
         .filter((f) => f.type.startsWith("image/") || /\.(heic|heif)$/i.test(f.name))
         .map(async (file) => {
-          const details = await readCameraDetails(file);
+          const [details, colour, ratio] = await Promise.all([readCameraDetails(file), detectColour(file), fileRatio(file)]);
           return {
             key: `${file.name}-${file.size}-${file.lastModified}`,
             file,
             preview: URL.createObjectURL(file),
-            input: { ...blank, ...shared, ...details, taken_at: details.taken_at || null },
+            ratio,
+            input: { ...blank, ...shared, ...details, taken_at: details.taken_at || null, tags: colour ? [colour] : [] },
             state: "ready" as const,
             progress: 0,
           };
@@ -202,6 +208,7 @@ export function UploadForm({ albums: initialAlbums }: { albums: AlbumOption[] })
                       idPrefix={`up-${i}`}
                       value={it.input}
                       albums={albums}
+                      knownTags={knownTags}
                       onChange={(input) => update(it.key, { input })}
                       onNewAlbum={async () => {
                         const id = await newAlbum();
@@ -239,6 +246,9 @@ export function UploadForm({ albums: initialAlbums }: { albums: AlbumOption[] })
             <div className="flex gap-3">
               {pending > 0 ? (
                 <>
+                  <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setPreviewing(true)}>
+                    Preview
+                  </button>
                   <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => publish("draft")}>
                     Save as draft
                   </button>
@@ -259,6 +269,31 @@ export function UploadForm({ albums: initialAlbums }: { albums: AlbumOption[] })
             </div>
           </div>
         </>
+      )}
+
+      {previewing && (
+        <PreviewDialog
+          title="Preview before publishing"
+          confirmLabel={`Publish ${pending} photo${pending === 1 ? "" : "s"}`}
+          busy={busy}
+          onClose={() => setPreviewing(false)}
+          onConfirm={async () => {
+            await publish("published");
+            setPreviewing(false);
+          }}
+          items={items
+            .filter((it) => it.state !== "done")
+            .map((it) => ({
+              key: it.key,
+              src: it.preview,
+              ratio: it.ratio,
+              caption: it.input.caption,
+              place: it.input.place,
+              tags: it.input.tags,
+              members: it.input.visibility === "members",
+              album: albums.find((a) => a.id === it.input.album_id)?.title,
+            }))}
+        />
       )}
     </div>
   );

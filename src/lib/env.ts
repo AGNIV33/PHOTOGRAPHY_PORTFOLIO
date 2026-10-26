@@ -16,6 +16,9 @@ export const cloudinaryEnv = {
   apiSecret: read("CLOUDINARY_API_SECRET"),
 };
 
+// Optional: lets the dashboard suggest photo categories (Street, Nature, ...) with Claude.
+export const anthropicKey = read("ANTHROPIC_API_KEY");
+
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
 export const isCloudinaryConfigured = Boolean(

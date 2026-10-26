@@ -270,12 +270,16 @@ export function Select({
 export function SuggestInput({
   value,
   onChange,
+  onPick,
   suggestions,
   className = "field",
+  onKeyDown: outerKeyDown,
   ...input
 }: {
   value: string;
   onChange: (value: string) => void;
+  // Called instead of onChange when a suggestion is chosen (a tag box adds it straight away).
+  onPick?: (value: string) => void;
   suggestions: readonly string[];
   className?: string;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "list">) {
@@ -297,7 +301,7 @@ export function SuggestInput({
   const show = () => setPlace(measure(field.current));
   const choose = (i: number) => {
     const o = opts[i];
-    if (o) onChange(o.value);
+    if (o) (onPick ?? onChange)(o.value);
     close();
     field.current?.focus();
   };
@@ -305,8 +309,13 @@ export function SuggestInput({
   useDismiss(place !== null, close, field, list);
   useKeepInView(list, active, open);
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.altKey || e.ctrlKey || e.metaKey) return;
+    // A highlighted suggestion wins over whatever the parent does with Enter.
+    if (!(e.key === "Enter" && open && active >= 0)) {
+      outerKeyDown?.(e);
+      if (e.defaultPrevented) return;
+    }
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (!open) {

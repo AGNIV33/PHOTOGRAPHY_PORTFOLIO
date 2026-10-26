@@ -7,6 +7,7 @@ const items = [
   { href: "/admin", label: "My photos" },
   { href: "/admin/upload", label: "Add photo" },
   { href: "/admin/albums", label: "Albums" },
+  { href: "/admin/categories", label: "Categories" },
   { href: "/admin/comments", label: "Comments" },
   { href: "/admin/journal", label: "Journal" },
   { href: "/admin/achievements", label: "Achievements" },

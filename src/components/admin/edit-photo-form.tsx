@@ -2,22 +2,44 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { createAlbum, deletePhoto, updatePhoto, type PhotoInput } from "@/app/admin/actions";
+import { createAlbum, deletePhoto, suggestTags, updatePhoto, type PhotoInput } from "@/app/admin/actions";
 import { PhotoFields, type AlbumOption } from "./photo-fields";
 
 type Props = {
   id: string;
   initial: PhotoInput;
   albums: AlbumOption[];
+  knownTags: string[];
 };
 
-export function EditPhotoForm({ id, initial, albums: initialAlbums }: Props) {
+export function EditPhotoForm({ id, initial, albums: initialAlbums, knownTags }: Props) {
   const router = useRouter();
   const [value, setValue] = useState(initial);
   const [albums, setAlbums] = useState(initialAlbums);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
+  const [suggesting, setSuggesting] = useState(false);
+  const [tagsNote, setTagsNote] = useState("");
+
+  async function suggest() {
+    setSuggesting(true);
+    setTagsNote("");
+    try {
+      const r = await suggestTags(id);
+      setValue((v) => ({ ...v, tags: r.tags }));
+      setSaved(false);
+      setTagsNote(
+        r.ai
+          ? "Suggested by AI. Take off any that don't fit, then save."
+          : "Black & white / colour was checked. AI style suggestions need the Anthropic key to be set up.",
+      );
+    } catch (e) {
+      setTagsNote(e instanceof Error ? e.message : "Could not suggest categories.");
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   const save = (status: PhotoInput["status"]) =>
     start(async () => {
@@ -51,6 +73,10 @@ export function EditPhotoForm({ id, initial, albums: initialAlbums }: Props) {
         idPrefix="edit"
         value={value}
         albums={albums}
+        knownTags={knownTags}
+        onSuggestTags={suggest}
+        suggestingTags={suggesting}
+        tagsNote={tagsNote}
         onChange={(v) => {
           setValue(v);
           setSaved(false);

@@ -4,11 +4,12 @@ import { Suspense } from "react";
 import { AdminGate } from "@/components/admin/admin-gate";
 import { EditPhotoForm } from "@/components/admin/edit-photo-form";
 import { imageUrl } from "@/lib/cloudinary";
-import { adminGetPhoto, adminListAlbums } from "@/lib/photos";
+import { countTags } from "@/lib/categories";
+import { adminGetPhoto, adminListAlbums, adminListPhotos } from "@/lib/photos";
 
 async function Editor({ params }: { params: PageProps<"/admin/photos/[id]">["params"] }) {
   const { id } = await params;
-  const [photo, albums] = await Promise.all([adminGetPhoto(id), adminListAlbums()]);
+  const [photo, albums, all] = await Promise.all([adminGetPhoto(id), adminListAlbums(), adminListPhotos()]);
   if (!photo) notFound();
 
   const input = {
@@ -24,6 +25,7 @@ async function Editor({ params }: { params: PageProps<"/admin/photos/[id]">["par
     album_id: photo.album_id,
     visibility: photo.visibility,
     status: photo.status,
+    tags: photo.tags ?? [],
   };
 
   return (
@@ -37,7 +39,12 @@ async function Editor({ params }: { params: PageProps<"/admin/photos/[id]">["par
         )}
       </div>
       <div className="lg:col-span-7">
-        <EditPhotoForm id={photo.id} initial={input} albums={albums.map((a) => ({ id: a.id, title: a.title }))} />
+        <EditPhotoForm
+          id={photo.id}
+          initial={input}
+          albums={albums.map((a) => ({ id: a.id, title: a.title }))}
+          knownTags={[...countTags(all).keys()]}
+        />
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { EmptyState, PageHead } from "@/components/page-head";
 import { PhotoFrame } from "@/components/photo-frame";
-import { PhotoGrid } from "@/components/photo-tile";
+import { GalleryBrowser } from "@/components/gallery-browser";
 import { getUser } from "@/lib/auth";
 import { isBackendReady } from "@/lib/env";
 import { listPhotos } from "@/lib/photos";
@@ -44,7 +44,7 @@ async function Gallery() {
           <Link href="/signin?next=/gallery" className="text-[var(--safelight)] underline">Sign in to see all</Link>
         </p>
       )}
-      <PhotoGrid photos={photos} />
+      <GalleryBrowser photos={photos} />
     </>
   );
 }

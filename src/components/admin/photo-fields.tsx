@@ -2,6 +2,7 @@
 
 import type { PhotoInput } from "@/app/admin/actions";
 import { Select } from "@/components/select";
+import { TagInput } from "./tag-input";
 
 export type AlbumOption = { id: string; title: string };
 
@@ -11,10 +12,15 @@ type Props = {
   albums: AlbumOption[];
   onNewAlbum?: () => void;
   idPrefix: string;
+  // Categories already used on the website, offered as suggestions.
+  knownTags?: string[];
+  onSuggestTags?: () => void;
+  suggestingTags?: boolean;
+  tagsNote?: string;
 };
 
 // The plain form your father fills in for each photo.
-export function PhotoFields({ value, onChange, albums, onNewAlbum, idPrefix }: Props) {
+export function PhotoFields({ value, onChange, albums, onNewAlbum, idPrefix, knownTags, onSuggestTags, suggestingTags, tagsNote }: Props) {
   const set = <K extends keyof PhotoInput>(k: K, v: PhotoInput[K]) => onChange({ ...value, [k]: v });
   const id = (k: string) => `${idPrefix}-${k}`;
 
@@ -87,6 +93,15 @@ export function PhotoFields({ value, onChange, albums, onNewAlbum, idPrefix }: P
           </div>
         </fieldset>
       </div>
+
+      <TagInput
+        value={value.tags}
+        onChange={(tags) => set("tags", tags)}
+        known={knownTags}
+        onSuggest={onSuggestTags}
+        suggesting={suggestingTags}
+        note={tagsNote}
+      />
 
       <details className="exif-details">
         <summary>

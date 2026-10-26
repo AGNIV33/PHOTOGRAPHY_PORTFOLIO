@@ -75,6 +75,16 @@ export function swatchUrl(publicId: string) {
   });
 }
 
+// A plain 768px copy (no watermark), used only on the server to work out a photograph's
+// colours and subject. Never shown.
+export function analysisUrl(publicId: string) {
+  return cloudinary.url(publicId, {
+    type: DELIVERY_TYPE,
+    sign_url: true,
+    transformation: [{ width: 768, height: 768, crop: "limit" }, { fetch_format: "jpg", quality: 80 }],
+  });
+}
+
 export async function deleteImage(publicId: string) {
   await cloudinary.uploader.destroy(publicId, { type: DELIVERY_TYPE, invalidate: true });
 }
