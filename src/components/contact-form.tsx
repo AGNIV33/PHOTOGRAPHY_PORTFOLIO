@@ -56,10 +56,11 @@ export function ContactForm({ directEmail }: { directEmail: string }) {
     openedAt.current = Date.now();
   }, []);
 
-  const set = (k: ContactField) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setV({ ...v, [k]: e.target.value });
+  const put = (k: ContactField, value: string) => {
+    setV({ ...v, [k]: value });
     if (error?.field === k) setError(null);
   };
+  const set = (k: ContactField) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => put(k, e.target.value);
   const fieldError = (k: ContactField) => (error?.field === k ? error.text : null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -150,7 +151,7 @@ export function ContactForm({ directEmail }: { directEmail: string }) {
         <Field label="Your email" required type="email" inputMode="email" autoComplete="email" maxLength={LIMITS.email} value={v.email} onChange={set("email")} error={fieldError("email")} placeholder="you@example.com" />
       </div>
 
-      <SelectField label="What is it about?" required options={SUBJECTS} placeholder="Choose a topic" value={v.subject} onChange={set("subject")} error={fieldError("subject")} />
+      <SelectField label="What is it about?" options={SUBJECTS} placeholder="Choose a topic" value={v.subject} onChange={(x) => put("subject", x)} error={fieldError("subject")} />
 
       <TextAreaField
         label="Your message"

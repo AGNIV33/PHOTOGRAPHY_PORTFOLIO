@@ -24,10 +24,11 @@ export function SignUpForm() {
     return () => clearTimeout(t);
   }, [wait]);
 
-  const set = (k: keyof SignUpInput) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setV({ ...v, [k]: e.target.value, ...(k === "country" ? { state: "" } : {}) });
+  const put = (k: keyof SignUpInput, value: string) => {
+    setV({ ...v, [k]: value, ...(k === "country" ? { state: "" } : {}) });
     if (error?.field === k) setError(null);
   };
+  const set = (k: keyof SignUpInput) => (e: React.ChangeEvent<HTMLInputElement>) => put(k, e.target.value);
   const fieldError = (k: keyof SignUpInput | "confirm") => (error?.field === k ? error.text : null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -114,9 +115,9 @@ export function SignUpForm() {
             error={fieldError("phone")}
             hint="Only the website's owners can see this."
           />
-          <SelectField label="Country" required options={COUNTRIES} placeholder="Choose a country" value={v.country} onChange={set("country")} error={fieldError("country")} autoComplete="country-name" />
+          <SelectField label="Country" options={COUNTRIES} placeholder="Choose a country" value={v.country} onChange={(x) => put("country", x)} error={fieldError("country")} />
           {india ? (
-            <SelectField label="State" required options={INDIA_STATES} placeholder="Choose a state" value={v.state} onChange={set("state")} error={fieldError("state")} />
+            <SelectField label="State" options={INDIA_STATES} placeholder="Choose a state" value={v.state} onChange={(x) => put("state", x)} error={fieldError("state")} />
           ) : (
             <Field label="State / region" required maxLength={80} autoComplete="address-level1" value={v.state} onChange={set("state")} error={fieldError("state")} />
           )}

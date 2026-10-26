@@ -8,6 +8,7 @@ import {
   getUploadSignature,
   type PhotoInput,
 } from "@/app/admin/actions";
+import { Select } from "@/components/select";
 import { readCameraDetails } from "@/lib/exif";
 import { uploadToCloudinary } from "@/lib/upload-client";
 import { PhotoFields, type AlbumOption } from "./photo-fields";
@@ -140,18 +141,14 @@ export function UploadForm({ albums: initialAlbums }: { albums: AlbumOption[] })
             <label className="grid gap-1.5">
               <span className="label">Album for all these photos</span>
               <div className="flex gap-2">
-                <select
-                  className="field flex-1"
+                <Select
+                  variant="box"
+                  className="flex-1"
+                  ariaLabel="Album for all these photos"
                   value={shared.album_id ?? ""}
-                  onChange={(e) => applyShared({ album_id: e.target.value || null })}
-                >
-                  <option value="">No album</option>
-                  {albums.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.title}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => applyShared({ album_id: v || null })}
+                  options={[{ value: "", label: "No album" }, ...albums.map((a) => ({ value: a.id, label: a.title }))]}
+                />
                 <button
                   type="button"
                   className="btn btn-ghost"

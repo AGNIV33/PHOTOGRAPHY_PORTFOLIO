@@ -1,6 +1,7 @@
 "use client";
 
 import type { PhotoInput } from "@/app/admin/actions";
+import { Select } from "@/components/select";
 
 export type AlbumOption = { id: string; title: string };
 
@@ -46,19 +47,14 @@ export function PhotoFields({ value, onChange, albums, onNewAlbum, idPrefix }: P
         <label className="grid gap-1.5" htmlFor={id("album")}>
           <span className="label">Album</span>
           <div className="flex gap-2">
-            <select
+            <Select
               id={id("album")}
-              className="field flex-1"
+              variant="box"
+              className="flex-1"
               value={value.album_id ?? ""}
-              onChange={(e) => set("album_id", e.target.value || null)}
-            >
-              <option value="">No album</option>
-              {albums.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.title}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => set("album_id", v || null)}
+              options={[{ value: "", label: "No album" }, ...albums.map((a) => ({ value: a.id, label: a.title }))]}
+            />
             {onNewAlbum && (
               <button type="button" className="btn btn-ghost" onClick={onNewAlbum}>
                 New album

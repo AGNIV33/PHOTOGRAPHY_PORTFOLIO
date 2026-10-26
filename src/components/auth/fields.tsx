@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { passwordScore } from "@/lib/password";
+import { Select } from "../select";
 
 type Common = {
   label: string;
@@ -58,22 +59,14 @@ export function SelectField({
   options,
   placeholder,
   className,
-  ...select
-}: Common & { options: readonly string[]; placeholder: string } & React.SelectHTMLAttributes<HTMLSelectElement>) {
+  value,
+  onChange,
+}: Common & { options: readonly string[]; placeholder: string; value: string; onChange: (value: string) => void }) {
   const id = useId();
   return (
     <div className={`auth-field ${className ?? ""}`} data-invalid={error ? "" : undefined}>
       <label htmlFor={id} className="label">{label}</label>
-      <select id={id} className="auth-input auth-select" aria-invalid={error ? true : undefined} {...select}>
-        <option value="" disabled>
-          {placeholder}
-        </option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+      <Select id={id} options={options} placeholder={placeholder} value={value} onChange={onChange} invalid={!!error} />
       {error && <p className="auth-note" role="alert">{error}</p>}
     </div>
   );

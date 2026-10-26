@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { SuggestInput } from "@/components/select";
 
 // One editor for short lists (achievements, gear): add, edit, move up/down, delete.
 
@@ -53,7 +54,7 @@ function useRun() {
   return { run, msg, error, pending };
 }
 
-function Fields({ fields, values, onChange, idPrefix }: { fields: ListField[]; values: Values; onChange: (v: Values) => void; idPrefix: string }) {
+function Fields({ fields, values, onChange }: { fields: ListField[]; values: Values; onChange: (v: Values) => void }) {
   return (
     <div className="list-fields">
       {fields.map((f) => (
@@ -62,20 +63,21 @@ function Fields({ fields, values, onChange, idPrefix }: { fields: ListField[]; v
           {f.multiline ? (
             <textarea className="field" rows={2} value={values[f.name] ?? ""} placeholder={f.placeholder} onChange={(e) => onChange({ ...values, [f.name]: e.target.value })} />
           ) : (
-            <input
-              className="field"
-              value={values[f.name] ?? ""}
-              placeholder={f.placeholder}
-              list={f.suggestions ? `${idPrefix}-${f.name}` : undefined}
-              onChange={(e) => onChange({ ...values, [f.name]: e.target.value })}
-            />
-          )}
-          {f.suggestions && (
-            <datalist id={`${idPrefix}-${f.name}`}>
-              {f.suggestions.map((s) => (
-                <option key={s} value={s} />
-              ))}
-            </datalist>
+            f.suggestions ? (
+              <SuggestInput
+                value={values[f.name] ?? ""}
+                placeholder={f.placeholder}
+                suggestions={f.suggestions}
+                onChange={(v) => onChange({ ...values, [f.name]: v })}
+              />
+            ) : (
+              <input
+                className="field"
+                value={values[f.name] ?? ""}
+                placeholder={f.placeholder}
+                onChange={(e) => onChange({ ...values, [f.name]: e.target.value })}
+              />
+            )
           )}
         </label>
       ))}
@@ -101,7 +103,7 @@ function Row({ item, index, total, props }: { item: ListItem; index: number; tot
           </button>
         </div>
       </div>
-      <Fields fields={props.fields} values={values} onChange={setValues} idPrefix={item.id} />
+      <Fields fields={props.fields} values={values} onChange={setValues} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-[14px]" role="status">
           {error ? <span className="text-[var(--safelight)]">{error}</span> : <span className="text-[var(--ink-2)]">{msg}</span>}
@@ -144,7 +146,7 @@ export function ListManager(props: Props) {
         }}
       >
         <span className="kicker">Add {props.noun}</span>
-        <Fields fields={props.fields} values={values} onChange={setValues} idPrefix="new" />
+        <Fields fields={props.fields} values={values} onChange={setValues} />
         <div className="flex flex-wrap items-center gap-4">
           <button type="submit" className="btn btn-primary" disabled={pending}>
             {pending ? "Adding…" : `Add ${props.noun}`}
