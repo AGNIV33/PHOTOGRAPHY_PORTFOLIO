@@ -2456,19 +2456,6 @@ select.field {
   }
 }
 
-.gs-progress {
-  display: block;
-  height: 1px;
-  background: var(--hairline);
-}
-
-.gs-progress span {
-  display: block;
-  height: 100%;
-  background: var(--safelight);
-  transform: scaleX(0);
-  transform-origin: left;
-}
 
 /* Laptops and desktops: pinned and scroll-driven. */
 @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
@@ -2495,7 +2482,7 @@ select.field {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: min(26vw, 440px);
+    width: min(34vw, 600px);
     opacity: 0;
     will-change: transform;
     /* If scripts never run, show the photographs anyway after a moment. */
@@ -2523,13 +2510,6 @@ select.field {
     z-index: 200;
   }
 
-  .gs-progress {
-    position: absolute;
-    left: var(--gutter);
-    right: var(--gutter);
-    bottom: 36px;
-    z-index: 200;
-  }
 }
 
 @keyframes gs-show {
@@ -2565,7 +2545,6 @@ select.field {
   }
 
   .gs-info,
-  .gs-progress,
   .gs-cursor,
   .gs-scribble {
     display: none;

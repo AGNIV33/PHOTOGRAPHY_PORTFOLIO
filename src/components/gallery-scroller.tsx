@@ -19,7 +19,7 @@ const TILT_Y = [-16, -10, -20, -12, -18, -8, -14]; // and turns towards the view
 const TILT_Z = [-5, 4, -3, 6, -4, 3, -6]; // and its own small sideways turn
 const GROW = Math.log(1.24); // each photograph up the line is 24% bigger than the one before
 const ANGLE = (26 * Math.PI) / 180; // slope of the line
-const GAP = 0.16; // clear space between neighbours, as a share of their width
+const GAP = 0.26; // clear space between neighbours, as a share of their width
 const HOLD = 0.18; // share of each step where the row rests on a photograph
 // Spacing along the line so that, at every resting point, neighbours are exactly one gap apart
 // whatever their size: centre distance = (half width + half width) x (1 + gap).
@@ -43,7 +43,6 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-  const barRef = useRef<HTMLSpanElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLSpanElement>(null);
@@ -98,8 +97,8 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
 
       const W = st.clientWidth;
       const H = st.clientHeight;
-      const D = Math.min(W * 0.26, 440); // width of the photograph in focus
-      const fx = W * 0.11; // where the photograph in focus sits, from the centre
+      const D = Math.min(W * 0.34, 600); // width of the photograph in focus
+      const fx = W * 0.14; // where the photograph in focus sits, from the centre
       const fy = H * 0.07;
 
       let nearest = 0;
@@ -125,7 +124,6 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
           nearest = i;
         }
       });
-      if (barRef.current) barRef.current.style.transform = `scaleX(${p.toFixed(4)})`;
       setFocus(nearest);
     };
 
@@ -233,9 +231,6 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
             </svg>
           </span>
         </Link>
-        <span className="gs-progress" aria-hidden="true">
-          <span ref={barRef} />
-        </span>
         <span ref={cursorRef} className="gs-cursor" aria-hidden="true">
           View
         </span>
