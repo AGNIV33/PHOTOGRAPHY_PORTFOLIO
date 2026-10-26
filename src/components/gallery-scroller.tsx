@@ -22,7 +22,7 @@ const TILT_Y = [-16, -10, -20, -12, -18, -8, -14]; // and turns towards the view
 const TILT_Z = [-5, 4, -3, 6, -4, 3, -6]; // and its own small sideways turn
 const GROW = Math.log(1.24); // each photograph up the line is 24% bigger than the one before
 const ANGLE = (20 * Math.PI) / 180; // slope of the line
-const GAP = 0.26; // clear space between neighbours, as a share of their width
+const GAP = 0.16; // clear space between neighbours, as a share of their width
 const HOLD = 0.18; // share of each step where the row rests on a photograph
 const HOVER_DELAY = 1500; // the pointer must rest on a photograph this long (ms) before it comes forward
 const GLIDE = 0.09; // share of the remaining distance covered each frame (smaller = smoother, more lag)
@@ -109,7 +109,7 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
       }
       const mobile = narrow.matches;
       const grow = mobile ? Math.log(1.16) : GROW;
-      const gap = mobile ? 0.2 : GAP;
+      const gap = mobile ? 0.12 : GAP;
       const slope = mobile ? Math.tan((38 * Math.PI) / 180) : Math.tan(ANGLE);
       const spacing = spacingFor(grow, gap);
       // Each photograph's width comes from the CSS, so the spacing follows it exactly.
@@ -125,6 +125,12 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
       const q = p * (total - 1);
       const k = Math.floor(q);
       const shift = Math.min(total - 1, k + easeInOut(Math.min(1, Math.max(0, (q - k - HOLD / 2) / (1 - HOLD)))));
+
+      // The caption panel's box (inside the stage). Photographs under it fade out.
+      const panel = panelRef.current;
+      const box = panel
+        ? { l: panel.offsetLeft - 32, t: panel.offsetTop - 32, r: panel.offsetLeft + panel.offsetWidth + 32, b: panel.offsetTop + panel.offsetHeight + 32 }
+        : null;
 
       let nearest = 0;
       let best = Infinity;
@@ -145,7 +151,16 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
         el.style.transform = `translate3d(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px), 0) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${s.toFixed(4)})`;
         // Bigger photographs (further up the line) sit in front; a lifted one comes to the very front.
         el.style.zIndex = String(l > 0.5 ? 190 : 50 + Math.round(t * 10));
-        el.style.opacity = size < 0.3 ? "0" : "1";
+        // A photograph that would sit under the caption fades out instead of overlapping it.
+        let underPanel = false;
+        if (box) {
+          const hw = ((D * size * (1 + 0.08 * l)) / 2) * 1.3; // half width, with room for the tilt
+          const hh = ((el.offsetHeight * size * (1 + 0.08 * l)) / 2) * 1.3;
+          const cx = W / 2 + x;
+          const cy = H / 2 + y;
+          underPanel = cx + hw > box.l && cx - hw < box.r && cy + hh > box.t && cy - hh < box.b;
+        }
+        el.style.opacity = size < 0.3 || underPanel ? "0" : "1";
         if (Math.abs(t) < best) {
           best = Math.abs(t);
           nearest = i;
