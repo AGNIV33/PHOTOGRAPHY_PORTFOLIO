@@ -14,8 +14,9 @@ import { ProtectedImage } from "./protected-image";
 // one in focus. At the end the row simply runs out.
 // Motion is smoothed twice: Lenis smooths the page scroll, and the row then glides towards the
 // scroll position a few percent per frame, so it never jumps. The hover lift glides too.
-// On phones it is the same animation, tuned for a tall narrow screen. For people who turned
-// animations off it is a row to swipe instead; that switch is done in CSS.
+// This is the laptop and desktop version only. Phones get the plain grid of photographs (see
+// the home page). For people who turned animations off it is a row to swipe instead; that
+// switch is done in CSS.
 
 const TILT_X = [22, 18, 26, 20, 24, 16, 23]; // how far each photograph leans back (degrees)
 const TILT_Y = [-16, -10, -20, -12, -18, -8, -14]; // and turns towards the viewer
@@ -103,30 +104,28 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
 
     // Draws the whole row for a scroll position p (0 to 1), with each photograph's hover lift.
     const draw = (p: number) => {
-      if (reduced.matches) {
+      // Phones show the grid instead, so there is nothing to move here.
+      if (reduced.matches || narrow.matches) {
         itemRefs.current.forEach((el) => el && (el.style.transform = ""));
         return;
       }
-      const mobile = narrow.matches;
-      const grow = mobile ? Math.log(1.16) : GROW;
-      const gap = mobile ? 0.12 : GAP;
-      const slope = mobile ? Math.tan((38 * Math.PI) / 180) : Math.tan(ANGLE);
-      const spacing = spacingFor(grow, gap);
+      const grow = GROW;
+      const slope = Math.tan(ANGLE);
+      const spacing = spacingFor(grow, GAP);
       // Each photograph's width comes from the CSS, so the spacing follows it exactly.
       const D = itemRefs.current[0]?.offsetWidth || 320;
       const W = st.clientWidth;
       const H = st.clientHeight;
-      const lean = mobile ? 0.6 : 1; // 3D tilt is gentler on a phone
 
       // Scroll position in photographs, resting briefly on each one.
       const q = p * (total - 1);
       const k = Math.floor(q);
       const shift = Math.min(total - 1, k + easeInOut(Math.min(1, Math.max(0, (q - k - HOLD / 2) / (1 - HOLD)))));
 
-      // Where the photograph in focus sits. Laptop: right of centre, and for the very last
-      // photograph a little closer to the middle. Phone: the middle.
+      // Where the photograph in focus sits: right of centre, and for the very last photograph
+      // a little closer to the middle.
       const lastBlend = Math.min(1, Math.max(0, shift - (total - 2)));
-      const fx = mobile ? 0 : W * (0.14 - 0.08 * lastBlend);
+      const fx = W * (0.14 - 0.08 * lastBlend);
 
       // Height of the focus point: the photograph just before the focused one sits below and to
       // the left, so lift or lower the row to keep that one clear of the caption above it and
@@ -139,7 +138,7 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
       const prevDrop = Math.abs(((D * spacing) / grow) * (Math.exp(-grow) - 1)) * slope; // how far below the focus point it sits
       const fyMin = panelBottom + 14 + prevHeight / 2 - H / 2 - prevDrop;
       const fyMax = H / 2 - 14 - prevHeight / 2 - prevDrop;
-      const fyWanted = mobile ? H * 0.14 : -H * 0.14;
+      const fyWanted = -H * 0.14;
       // If there isn't room for both (a short window), share the shortfall between top and bottom.
       const fy = fyMin <= fyMax ? Math.min(Math.max(fyWanted, fyMin), fyMax) : (fyMin + fyMax) / 2;
 
@@ -155,9 +154,9 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
         const y = fy - along * slope;
         // Each one turns a little as it travels; a lifted photograph straightens to face you.
         const l = lift[i];
-        const rz = (TILT_Z[i % TILT_Z.length] + t * 4) * lean * (1 - l);
-        const ry = (TILT_Y[i % TILT_Y.length] + t * 3) * lean * (1 - l);
-        const rx = TILT_X[i % TILT_X.length] * lean * (1 - l);
+        const rz = (TILT_Z[i % TILT_Z.length] + t * 4) * (1 - l);
+        const ry = (TILT_Y[i % TILT_Y.length] + t * 3) * (1 - l);
+        const rx = TILT_X[i % TILT_X.length] * (1 - l);
         const s = size * (1 + 0.08 * l);
         el.style.transform = `translate3d(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px), 0) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${s.toFixed(4)})`;
         // Bigger photographs (further up the line) sit in front; a lifted one comes to the very front.
@@ -202,8 +201,18 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
       if (!frame) frame = requestAnimationFrame(glide);
     };
 
+    // The photographs are lazy in the page, so phones (where this gallery is hidden) never download
+    // them. On a laptop or desktop they are fetched straight away, so none is blank when it slides in.
+    const loadNow = () => {
+      if (narrow.matches) return;
+      sec.querySelectorAll("img").forEach((img) => {
+        img.loading = "eager";
+      });
+    };
+
     // Reads the scroll position of the section and starts the glide towards it.
     const measure = () => {
+      loadNow();
       const rect = sec.getBoundingClientRect();
       const scrollable = Math.max(1, rect.height - window.innerHeight);
       target = Math.min(1, Math.max(0, -rect.top / scrollable));
@@ -288,7 +297,6 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
                 alt={photo.caption}
                 width={photo.width}
                 height={photo.height}
-                priority
               />
               <span className="gs-cap">
                 <span>{photo.caption || "Untitled"}</span>

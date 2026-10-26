@@ -2550,37 +2550,17 @@ select.field {
   }
 }
 
-/* The same animation on a phone: smaller photographs, a compact panel at the top. */
-@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
-  .gs {
-    height: 480svh;
-  }
+/* Home page: the scrolling gallery on laptops and desktops, the plain grid on phones. */
+.frames-phone {
+  display: none;
+}
 
-  .gs-item {
-    width: min(68vw, 380px);
-  }
-
-  .gs-info {
-    top: 72px;
-    max-width: min(66vw, 300px);
-    gap: 6px;
-  }
-
-  .gs-title {
-    font-size: 32px;
-  }
-
-  /* Camera and settings are left for the photograph's own page. */
-  .gs-facts > div:nth-child(n + 3) {
+@media (max-width: 767px) {
+  .frames-wide {
     display: none;
   }
 
-  .gs-all {
-    right: var(--gutter);
-    bottom: 22px;
-  }
-
-  .gs-cursor {
-    display: none;
+  .frames-phone {
+    display: block;
   }
 }

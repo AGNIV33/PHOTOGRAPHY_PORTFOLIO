@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { GalleryScroller } from "@/components/gallery-scroller";
 import { Hero } from "@/components/hero";
+import { PhotoGrid } from "@/components/photo-tile";
 import { PhotoFrame } from "@/components/photo-frame";
 import { ProtectedImage } from "@/components/protected-image";
 import { getUser } from "@/lib/auth";
@@ -21,7 +22,10 @@ function PlaceholderSheet() {
   );
 }
 
-// The 7 newest open photos, so the home page is never a wall of locked tiles.
+// The newest open photos, so the home page is never a wall of locked tiles.
+// Laptops and desktops get the scrolling gallery (7 photos); phones get the plain grid (6 photos).
+// Both are in the page and CSS shows one of them; the images are lazy, so the hidden copy is
+// never downloaded.
 async function RecentFrames() {
   const placeholder = (
     <div className="wrap">
@@ -34,7 +38,16 @@ async function RecentFrames() {
   const open = photos.filter((p) => !p.locked).slice(0, 7);
   if (open.length === 0) return placeholder;
   const palettes = await Promise.all(open.map((p) => getPalette(p.swatch)));
-  return <GalleryScroller photos={open} palettes={palettes} />;
+  return (
+    <>
+      <div className="frames-wide">
+        <GalleryScroller photos={open} palettes={palettes} />
+      </div>
+      <div className="wrap frames-phone">
+        <PhotoGrid photos={open.slice(0, 6)} />
+      </div>
+    </>
+  );
 }
 
 async function AlbumRows() {
