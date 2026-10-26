@@ -101,7 +101,10 @@ export async function pageAfterSignIn(next: string) {
 }
 
 function friendly(message: string) {
-  if (/rate|limit|seconds|too many/i.test(message)) {
+  // Supabase lets one address ask for an email only once a minute.
+  const wait = message.match(/after (\d+) seconds?/i);
+  if (wait) return `Please wait ${wait[1]} seconds, then ask again. (An email can only be sent once a minute.)`;
+  if (/rate|limit|too many/i.test(message)) {
     return "Too many emails were asked for. Please wait a few minutes, then try again.";
   }
   if (/database error/i.test(message)) return "Some details are missing or too long. Please check the form.";
