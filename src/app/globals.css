@@ -1029,23 +1029,67 @@ a.social-icon:focus-visible {
 
 /* ---------- Real photos ---------- */
 
-/* Photos keep their own shape; columns let portrait and landscape frames sit together.
-   The photos are shared out between the columns in photo-tile.tsx. */
-.masonry {
-  display: grid;
-  align-items: start;
-  column-gap: var(--space-4);
+/* Photos keep their own shape and sit in even rows: each photo asks for a width in proportion
+   to its shape (--r = width / height), and the row stretches them all by the same amount, so
+   every photo in a row ends up the same height. The invisible ::after soaks up the spare
+   room, so the last row is not stretched. */
+.justified {
+  --h: 400px; /* on a phone each photo gets its own row */
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5) var(--space-4);
 }
 
-.masonry-col {
-  display: block;
+@media (min-width: 640px) {
+  .justified {
+    --h: 200px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .justified {
+    --h: clamp(220px, 16vw, 280px);
+  }
+}
+
+.justified::after {
+  content: "";
+  flex-grow: 999999;
+}
+
+.justified > .tile {
+  flex: var(--r) 1 calc(var(--r) * var(--h));
   min-width: 0;
+  align-self: flex-start;
+}
+
+/* One line each, so the captions in a row sit on the same line. */
+.justified .frame-meta {
+  min-width: 0;
+}
+
+.justified .frame-caption,
+.justified .frame-no {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The title keeps its room (up to 60%); the place and number take what is left. */
+.justified .frame-caption {
+  flex: 0 0 auto;
+  max-width: 60%;
+}
+
+.justified .frame-no {
+  flex: 1 1 0;
+  text-align: right;
 }
 
 .tile {
   display: grid;
   gap: var(--space-2);
-  margin-bottom: var(--space-5);
 }
 
 .tile-link {
@@ -2786,4 +2830,6 @@ textarea.field {
     transition: none;
   }
 }
+
+
 
