@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { AccountMenu, accountNames, useLogOut, useSignedInUser } from "@/components/account-menu";
 import { site } from "@/config/site";
 
 // The current path is only known at request time, so the header renders once without it
@@ -42,6 +43,7 @@ export function SiteHeaderView({ pathname }: { pathname: string | null }) {
               </Link>
             ))}
           </nav>
+          <AccountMenu />
           <button
             type="button"
             className="menu-btn"
@@ -67,11 +69,40 @@ export function SiteHeaderView({ pathname }: { pathname: string | null }) {
               <span className="frame-no">{String(i + 1).padStart(2, "0")}</span>
             </Link>
           ))}
-          <Link href="/signin" onClick={() => setOpen(false)}>
-            Sign in
-          </Link>
+          <MobileAccountLinks close={() => setOpen(false)} />
         </nav>
       )}
     </header>
+  );
+}
+
+function MobileAccountLinks({ close }: { close: () => void }) {
+  const { user, ready } = useSignedInUser();
+  const logOut = useLogOut();
+  if (!ready) return null;
+  if (!user) {
+    return (
+      <>
+        <Link href="/signin" onClick={close}>Sign in</Link>
+        <Link href="/signup" onClick={close}>Create account</Link>
+      </>
+    );
+  }
+  const names = accountNames(user);
+  return (
+    <>
+      {names.admin && <Link href="/admin" onClick={close}>Dashboard</Link>}
+      <button
+        type="button"
+        className="mobile-logout"
+        onClick={async () => {
+          close();
+          await logOut();
+        }}
+      >
+        Log out
+        <span className="label">{names.first}</span>
+      </button>
+    </>
   );
 }
