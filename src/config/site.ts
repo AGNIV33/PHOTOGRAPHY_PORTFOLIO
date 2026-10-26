@@ -24,9 +24,10 @@ export const site = {
     { href: "/gear", label: "Gear" },
   ],
   social: [
-    { label: "Instagram", href: "" },
-    // Opens a WhatsApp chat with +91 94345 51210. Can be changed in the dashboard (About & links).
+    // All three can be changed in the dashboard (About & links); a saved value there wins.
+    { label: "Instagram", href: "https://www.instagram.com/bumbarana.1111" },
+    // Opens a WhatsApp chat with +91 94345 51210.
     { label: "WhatsApp", href: "https://wa.me/919434551210" },
-    { label: "Facebook", href: "" },
+    { label: "Facebook", href: "https://www.facebook.com/suvrajit.sarkar.98" },
   ],
 } as const;
