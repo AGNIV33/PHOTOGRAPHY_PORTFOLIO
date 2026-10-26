@@ -174,6 +174,32 @@ a {
   white-space: nowrap;
 }
 
+.wordmark-mark {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  margin-right: -2px;
+  transition: transform 600ms var(--ease);
+}
+
+/* The aperture turns a little on hover, like a lens ring. */
+.wordmark:hover .wordmark-mark {
+  transform: rotate(-30deg);
+}
+
+@media (min-width: 640px) {
+  .wordmark-mark {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wordmark:hover .wordmark-mark {
+    transform: none;
+  }
+}
+
 .wordmark .sep {
   width: 1px;
   height: 14px;

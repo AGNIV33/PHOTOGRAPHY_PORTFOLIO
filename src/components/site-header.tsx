@@ -22,7 +22,9 @@ export function SiteHeaderView({ pathname }: { pathname: string | null }) {
   return (
     <header className="site-header" data-overlay={overlay ? "" : undefined}>
       <div className="wrap bar">
-        <Link href="/" className="wordmark" onClick={() => setOpen(false)}>
+        <Link href="/" className="wordmark" onClick={() => setOpen(false)} aria-label={`${site.name} Photography, home`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-mark.png" alt="" width={36} height={36} className="wordmark-mark" draggable={false} />
           {site.name}
           <span className="sep" aria-hidden="true" />
           <span className="sub">Photography</span>
