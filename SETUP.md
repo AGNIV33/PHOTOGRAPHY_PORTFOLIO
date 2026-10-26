@@ -7,7 +7,9 @@
 3. **Authentication → URL Configuration**
    - Site URL: `http://localhost:3000` (change to the live Vercel address later)
    - Redirect URLs: add `http://localhost:3000/**` (and later `https://<your-site>.vercel.app/**`)
-4. **Authentication → Email Templates** (optional, makes the sign-in email match the site):
+4. **Authentication → Email Templates** (optional, makes the sign-in email match the site).
+   New free projects ignore custom templates until **Custom SMTP** is on
+   (Authentication → Emails → SMTP Settings; e.g. Gmail: smtp.gmail.com, port 465, a Gmail App Password):
    open **Magic Link** and **Confirm signup**, set the subject written at the top of
    `supabase/email-templates/magic-link.html` / `confirm-signup.html`, paste the file into the message body, Save.
 5. **Project Settings → API Keys**: copy Project URL, Publishable key, Secret key.
