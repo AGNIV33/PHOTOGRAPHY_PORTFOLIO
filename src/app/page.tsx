@@ -127,25 +127,19 @@ export default function Home() {
         </Suspense>
       </section>
 
-      {/* Members-only invitation */}
-      <section className="wrap pt-24 md:pt-32">
-        <div className="grid gap-6 md:grid-cols-12 items-end">
-          <h2 className="md:col-span-7 serif text-[clamp(34px,4.6vw,64px)] leading-[1.08]">
-            More of the archive is open to members.
-          </h2>
-          <div className="md:col-span-5 grid gap-5">
-            <p className="text-[var(--ink-2)]">
+      {/* Members-only invitation: a calm band, smaller than the footer's big line below it */}
+      <section className="wrap pt-20 md:pt-28 pb-16 md:pb-24">
+        <div className="members-band">
+          <div className="grid gap-3">
+            <span className="kicker">Members</span>
+            <h2 className="serif members-title">More of the archive is open to members.</h2>
+            <p className="text-[var(--ink-2)] max-w-[52ch]">
               Create a free account to see every photograph, and to like and comment.
             </p>
-            <Link href="/signup" className="explore">
-              Create account
-              <span className="circle" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M2 9h13M10 4l5 5-5 5" stroke="currentColor" strokeWidth="1.3" />
-                </svg>
-              </span>
-            </Link>
           </div>
+          <Link href="/signup" className="btn btn-primary">
+            Create account
+          </Link>
         </div>
       </section>
     </>
