@@ -2,7 +2,7 @@ import "server-only";
 import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { cacheLife, cacheTag } from "next/cache";
 import { site } from "@/config/site";
-import { imageUrl } from "@/lib/cloudinary";
+import { imageUrl, previewImageUrl } from "@/lib/cloudinary";
 import { isBackendReady, isSupabaseConfigured, supabaseAnonKey, supabaseUrl } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -41,8 +41,15 @@ export type AchievementRow = {
   title: string;
   detail: string;
   link: string;
+  link_site: string;
+  link_title: string;
+  link_description: string;
+  // Cloudinary id of the picture on the link card ("" when there is none).
+  link_image: string;
   position: number;
 };
+
+export type AchievementView = Omit<AchievementRow, "link_image"> & { link_image_url: string | null };
 
 export type GearRow = {
   id: string;
@@ -131,13 +138,18 @@ export async function getPost(slug: string): Promise<PostView | null> {
   return data ? toPostView(data as PostRow) : null;
 }
 
-export async function listAchievements(): Promise<AchievementRow[]> {
+export function toAchievementView(row: AchievementRow): AchievementView {
+  const { link_image, ...rest } = row;
+  return { ...rest, link_image_url: link_image && isBackendReady ? previewImageUrl(link_image) : null };
+}
+
+export async function listAchievements(): Promise<AchievementView[]> {
   "use cache";
   cacheLife("hours");
   cacheTag(CONTENT_TAGS.achievements);
   if (!isSupabaseConfigured) return [];
   const { data } = await publicClient().from("achievements").select("*").order("position").order("created_at");
-  return (data ?? []) as AchievementRow[];
+  return ((data ?? []) as AchievementRow[]).map(toAchievementView);
 }
 
 export async function listGear(): Promise<GearRow[]> {

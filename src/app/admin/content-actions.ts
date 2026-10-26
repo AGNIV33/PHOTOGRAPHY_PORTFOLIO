@@ -2,8 +2,9 @@
 
 import { updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
-import { deleteImage } from "@/lib/cloudinary";
+import { deleteImage, deletePreviewImage, importPreviewImage, PREVIEW_FOLDER, signPreviewUpload } from "@/lib/cloudinary";
 import { adminGetPost, CONTENT_TAGS, type Settings } from "@/lib/content";
+import { fetchLinkPreview as readLinkPreview, parseWebAddress } from "@/lib/link-preview";
 import { slugify, uniqueSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -114,30 +115,97 @@ export async function discardCover(publicId: string) {
 
 // ---------- Achievements ----------
 
-export type AchievementInput = { year: string; title: string; detail: string; link: string };
+export type AchievementInput = {
+  year: string;
+  title: string;
+  detail: string;
+  link: string;
+  link_site: string;
+  link_title: string;
+  link_description: string;
+  // The link card's picture: one already stored, a web address to copy in, or none.
+  image: { public_id: string } | { remote_url: string } | null;
+};
 
-export async function saveAchievement(id: string | null, input: AchievementInput) {
+export async function getPreviewUploadSignature() {
+  await requireAdmin();
+  return signPreviewUpload();
+}
+
+// Looks at the linked page and returns what it shares. Admin only; nothing is saved yet.
+export async function fetchLinkPreview(rawLink: string) {
+  await requireAdmin();
+  const link = webLink(rawLink, "more information");
+  if (!link) return { error: "Paste a link first." as string };
+  try {
+    return { link, preview: await readLinkPreview(link) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "The link could not be read." };
+  }
+}
+
+export async function saveAchievement(id: string | null, input: AchievementInput): Promise<{ warning?: string }> {
   await requireAdmin();
   const title = text(input.title, 200);
   if (!title) throw new Error("Please write what the achievement is.");
+  const link = webLink(input.link, "more information");
+  if (link) parseWebAddress(link); // same address rules as the preview fetch
+  const db = createAdminClient();
+
+  const before = id
+    ? ((await db.from("achievements").select("link_image").eq("id", id).maybeSingle()).data as { link_image: string } | null)
+    : null;
+
+  let warning: string | undefined;
+  let image = "";
+  if (link && input.image) {
+    if ("public_id" in input.image) {
+      // Only pictures inside the previews folder can be attached (never his photographs).
+      if (!input.image.public_id.startsWith(`${PREVIEW_FOLDER}/`)) throw new Error("That picture can't be used.");
+      image = input.image.public_id;
+    } else if (input.image.remote_url) {
+      try {
+        const u = new URL(input.image.remote_url);
+        if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error();
+        image = await importPreviewImage(u.toString());
+      } catch {
+        warning = "Saved, but the picture could not be copied. You can upload one yourself.";
+      }
+    }
+  }
+
   const fields = {
     year: text(input.year, 20),
     title,
     detail: text(input.detail, 600),
-    link: webLink(input.link, "more information"),
+    link,
+    link_site: link ? text(input.link_site, 80) : "",
+    link_title: link ? text(input.link_title, 200) : "",
+    link_description: link ? text(input.link_description, 400) : "",
+    link_image: link ? image : "",
   };
-  const db = createAdminClient();
   const { error } = id
     ? await db.from("achievements").update(fields).eq("id", id)
     : await db.from("achievements").insert({ ...fields, position: await nextPosition("achievements") });
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (image && image !== before?.link_image) await deletePreviewImage(image).catch(() => {});
+    throw new Error(error.message);
+  }
+  // A replaced or removed picture is deleted from storage too.
+  if (before?.link_image && before.link_image !== fields.link_image) {
+    await deletePreviewImage(before.link_image).catch(() => {});
+  }
   updateTag(CONTENT_TAGS.achievements);
+  return warning ? { warning } : {};
 }
 
 export async function deleteAchievement(id: string) {
   await requireAdmin();
-  const { error } = await createAdminClient().from("achievements").delete().eq("id", id);
+  const db = createAdminClient();
+  const { data } = await db.from("achievements").select("link_image").eq("id", id).maybeSingle();
+  const { error } = await db.from("achievements").delete().eq("id", id);
   if (error) throw new Error(error.message);
+  if (data?.link_image) await deletePreviewImage(data.link_image as string).catch(() => {});
   updateTag(CONTENT_TAGS.achievements);
 }
 

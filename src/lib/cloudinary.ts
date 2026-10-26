@@ -68,3 +68,46 @@ export function imageUrl(publicId: string, size: Size) {
 export async function deleteImage(publicId: string) {
   await cloudinary.uploader.destroy(publicId, { type: DELIVERY_TYPE, invalidate: true });
 }
+
+// ---------- Link preview pictures (Achievements) ----------
+// Pictures for the link cards on the Achievements page. Unlike his photographs these are
+// ordinary public images (they come from other websites), so no watermark and no signing.
+
+export const PREVIEW_FOLDER = "previews";
+const PREVIEW_SIZE = "c_limit,w_1200,h_1200";
+
+export function signPreviewUpload() {
+  const timestamp = Math.round(Date.now() / 1000);
+  const params = { timestamp, folder: PREVIEW_FOLDER, type: "upload", transformation: PREVIEW_SIZE };
+  return {
+    ...params,
+    signature: cloudinary.utils.api_sign_request(params, cloudinaryEnv.apiSecret),
+    apiKey: cloudinaryEnv.apiKey,
+    cloudName: cloudinaryEnv.cloudName,
+  };
+}
+
+// Cloudinary's own servers download the picture, not ours, and shrink it on the way in.
+export async function importPreviewImage(remoteUrl: string) {
+  const res = await cloudinary.uploader.upload(remoteUrl, {
+    folder: PREVIEW_FOLDER,
+    type: "upload",
+    resource_type: "image",
+    transformation: [{ width: 1200, height: 1200, crop: "limit" }],
+  });
+  return res.public_id as string;
+}
+
+export function previewImageUrl(publicId: string) {
+  return cloudinary.url(publicId, {
+    type: "upload",
+    secure: true,
+    transformation: [{ width: 900, height: 900, crop: "limit" }, { fetch_format: "auto", quality: "auto" }],
+  });
+}
+
+// Only ever deletes inside the previews folder, never his photographs.
+export async function deletePreviewImage(publicId: string) {
+  if (!publicId.startsWith(`${PREVIEW_FOLDER}/`)) return;
+  await cloudinary.uploader.destroy(publicId, { type: "upload", invalidate: true });
+}

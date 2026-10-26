@@ -1,7 +1,13 @@
 // Sends a file straight from the browser to Cloudinary, using a signature from our server.
-import type { getUploadSignature } from "@/app/admin/actions";
-
-export type Signature = Awaited<ReturnType<typeof getUploadSignature>>;
+export type Signature = {
+  timestamp: number;
+  folder: string;
+  type: string;
+  transformation: string;
+  signature: string;
+  apiKey: string;
+  cloudName: string;
+};
 
 export function uploadToCloudinary(file: File, sig: Signature, onProgress: (p: number) => void) {
   return new Promise<{ public_id: string; width: number; height: number }>((resolve, reject) => {

@@ -3,7 +3,7 @@
 ## 1. Supabase (database + sign-in)
 1. supabase.com → New project (region: Mumbai).
 2. **SQL Editor → New query** → paste everything from `supabase/schema.sql` → **Run**.
-   (Already ran it before the Journal/achievements/gear editor existed? Run `supabase/content.sql` once too.)
+   (Already ran it earlier? Also run `supabase/content.sql`, then `supabase/link-previews.sql`, once each.)
 3. **Authentication → URL Configuration**
    - Site URL: `http://localhost:3000` (change to the live Vercel address later)
    - Redirect URLs: add `http://localhost:3000/**` and `https://<your-site>.vercel.app/**` (both, or links from one place land on the other)

@@ -260,3 +260,9 @@ create policy "comment as yourself" on public.comments
     and hidden = false
     and (exists (select 1 from public.profiles p where p.id = auth.uid()) or public.is_admin_email(auth.jwt() ->> 'email'))
   );
+
+-- Link previews on achievements: the title, text and picture of the page he links to.
+alter table public.achievements add column if not exists link_site text not null default '';
+alter table public.achievements add column if not exists link_title text not null default '';
+alter table public.achievements add column if not exists link_description text not null default '';
+alter table public.achievements add column if not exists link_image text not null default '';
