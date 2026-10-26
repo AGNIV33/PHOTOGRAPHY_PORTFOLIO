@@ -87,7 +87,9 @@ export function UploadForm({ albums: initialAlbums }: { albums: AlbumOption[] })
   async function publish(status: PhotoInput["status"]) {
     setBusy(true);
     const todo = items.filter((it) => it.state === "ready" || it.state === "error");
-    for (const it of todo) {
+    // The gallery shows the newest upload first. Uploading the list from the bottom up keeps
+    // the order he picked: the first photo in the list ends up on top.
+    for (const it of [...todo].reverse()) {
       update(it.key, { state: "uploading", progress: 0, error: undefined });
       try {
         const sig = await getUploadSignature();

@@ -859,26 +859,20 @@ a {
 
 /* ---------- Real photos ---------- */
 
-/* Photos keep their own shape; columns let portrait and landscape frames sit together. */
+/* Photos keep their own shape; columns let portrait and landscape frames sit together.
+   The photos are shared out between the columns in photo-tile.tsx. */
 .masonry {
-  columns: 1;
+  display: grid;
+  align-items: start;
   column-gap: var(--space-4);
 }
 
-@media (min-width: 640px) {
-  .masonry {
-    columns: 2;
-  }
-}
-
-@media (min-width: 1024px) {
-  .masonry {
-    columns: 3;
-  }
+.masonry-col {
+  display: block;
+  min-width: 0;
 }
 
 .tile {
-  break-inside: avoid;
   display: grid;
   gap: var(--space-2);
   margin-bottom: var(--space-5);

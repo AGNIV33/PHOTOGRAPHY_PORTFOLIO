@@ -76,8 +76,9 @@ export async function listPhotos(user: User | null, opts: { albumId?: string; li
     .from("photos")
     .select(PHOTO_FIELDS)
     .eq("status", "published")
-    .order("taken_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false });
+    // Newest upload first; the id only settles ties so the order never jumps around.
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
   if (opts.albumId) q = q.eq("album_id", opts.albumId);
   if (opts.limit) q = q.limit(opts.limit);
   const { data } = await q;
@@ -143,7 +144,8 @@ export async function adminListPhotos() {
   const { data } = await createAdminClient()
     .from("photos")
     .select(PHOTO_FIELDS)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
   return (data ?? []) as PhotoRow[];
 }
 
