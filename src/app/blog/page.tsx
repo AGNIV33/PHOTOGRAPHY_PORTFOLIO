@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AboutTabs } from "@/components/about-tabs";
 import { EmptyState, PageHead } from "@/components/page-head";
 import { ProtectedImage } from "@/components/protected-image";
 import { formatDay, listPosts } from "@/lib/content";
@@ -11,6 +12,7 @@ export default async function JournalPage() {
   return (
     <div className="wrap">
       <PageHead index="03" title="Journal" intro="Stories and notes from the street." />
+      <AboutTabs current="/blog" />
       {posts.length === 0 ? (
         <EmptyState title="No posts yet." body="Stories will appear here soon." />
       ) : (

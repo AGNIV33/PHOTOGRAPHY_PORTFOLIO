@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AboutTabs } from "@/components/about-tabs";
 import { EmptyState, PageHead } from "@/components/page-head";
 import { listGear } from "@/lib/content";
 
@@ -13,6 +14,7 @@ export default async function GearPage() {
   return (
     <div className="wrap">
       <PageHead index="05" title="Gear" intro="The cameras and lenses behind the photographs." />
+      <AboutTabs current="/gear" />
       {rows.length === 0 ? (
         <EmptyState title="No gear listed yet." body="Cameras and lenses will appear here soon." />
       ) : (

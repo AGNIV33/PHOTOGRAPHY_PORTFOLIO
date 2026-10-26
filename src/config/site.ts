@@ -12,7 +12,7 @@ export const site = {
   nav: [
     { href: "/", label: "Home", match: ["/"] },
     { href: "/gallery", label: "Work", match: ["/gallery", "/albums"] },
-    { href: "/about", label: "About", match: ["/about", "/achievements", "/gear"] },
+    { href: "/about", label: "About", match: ["/about", "/achievements", "/gear", "/blog"] },
     { href: "/contact", label: "Contact", match: ["/contact"] },
   ],
   // Everything else, linked from the footer.

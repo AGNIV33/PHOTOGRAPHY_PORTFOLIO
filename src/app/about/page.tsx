@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AboutTabs } from "@/components/about-tabs";
 import { EmptyState, PageHead } from "@/components/page-head";
 import { site } from "@/config/site";
 import { getSettings, paragraphs } from "@/lib/content";
@@ -15,6 +16,7 @@ export default async function AboutPage() {
   return (
     <div className="wrap">
       <PageHead index="06" title="About" intro={`${site.role}${settings.city ? `, ${settings.city}` : ""}.`} />
+      <AboutTabs current="/about" />
       {!lead ? (
         <EmptyState title="About text coming soon." body="The photographer's story will appear here." />
       ) : (

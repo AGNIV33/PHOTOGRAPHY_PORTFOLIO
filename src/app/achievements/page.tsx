@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AboutTabs } from "@/components/about-tabs";
 import { EmptyState, PageHead } from "@/components/page-head";
 import { listAchievements } from "@/lib/content";
 
@@ -9,6 +10,7 @@ export default async function AchievementsPage() {
   return (
     <div className="wrap">
       <PageHead index="04" title="Achievements" intro="Awards, exhibitions and features." />
+      <AboutTabs current="/achievements" />
       {rows.length === 0 ? (
         <EmptyState title="No achievements listed yet." body="Awards and exhibitions will appear here soon." />
       ) : (
