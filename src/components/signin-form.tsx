@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/browser";
+import { sendSignInLink } from "@/app/auth/actions";
 
 // Supabase's free plan only sends a few emails an hour, so resending waits a minute.
 const RESEND_WAIT = 60;
@@ -28,14 +28,8 @@ export function SignInForm({ next = "/" }: { next?: string }) {
   }, [wait]);
 
   async function send() {
-    const supabase = createClient();
-    const redirect = new URL("/auth/callback", window.location.origin);
-    redirect.searchParams.set("next", next);
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: redirect.toString() },
-    });
-    return error;
+    const { error } = await sendSignInLink(email, next);
+    return error ? { message: error } : null;
   }
 
   async function onSubmit(e: React.FormEvent) {

@@ -6,7 +6,7 @@
    (Already ran it before the Journal/achievements/gear editor existed? Run `supabase/content.sql` once too.)
 3. **Authentication → URL Configuration**
    - Site URL: `http://localhost:3000` (change to the live Vercel address later)
-   - Redirect URLs: add `http://localhost:3000/**` (and later `https://<your-site>.vercel.app/**`)
+   - Redirect URLs: add `http://localhost:3000/**` and `https://<your-site>.vercel.app/**` (both, or links from one place land on the other)
 4. **Authentication → Email Templates** (optional, makes the sign-in email match the site).
    New free projects ignore custom templates until **Custom SMTP** is on
    (Authentication → Emails → SMTP Settings; e.g. Gmail: smtp.gmail.com, port 465, a Gmail App Password):
