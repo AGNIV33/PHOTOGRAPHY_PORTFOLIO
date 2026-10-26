@@ -168,7 +168,7 @@ const DEFAULT_SETTINGS: Settings = {
   email: "",
   instagram: site.social.find((s) => s.label === "Instagram")?.href ?? "",
   facebook: site.social.find((s) => s.label === "Facebook")?.href ?? "",
-  whatsapp: "",
+  whatsapp: site.social.find((s) => s.label === "WhatsApp")?.href ?? "",
 };
 
 export async function getSettings(): Promise<Settings> {
@@ -230,7 +230,9 @@ export async function adminListGear() {
 
 export async function adminGetSettings(): Promise<Settings> {
   const { data } = await createAdminClient().from("site_settings").select("*").eq("id", 1).maybeSingle();
-  return { about: "", city: "", email: "", instagram: "", facebook: "", whatsapp: "", ...((data as Partial<Settings> | null) ?? {}) };
+  const row = { about: "", city: "", email: "", instagram: "", facebook: "", whatsapp: "", ...((data as Partial<Settings> | null) ?? {}) };
+  // Show the number that is already live, so the dashboard form is never confusingly empty.
+  return { ...row, whatsapp: row.whatsapp || DEFAULT_SETTINGS.whatsapp };
 }
 
 // The year for the footer. Cached for a day so the page can still be prerendered.

@@ -25,6 +25,8 @@ export const site = {
   ],
   social: [
     { label: "Instagram", href: "" },
+    // Opens a WhatsApp chat with +91 94345 51210. Can be changed in the dashboard (About & links).
+    { label: "WhatsApp", href: "https://wa.me/919434551210" },
     { label: "Facebook", href: "" },
   ],
 } as const;

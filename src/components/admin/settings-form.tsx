@@ -65,7 +65,7 @@ export function SettingsForm({ initial }: { initial: Settings }) {
           <span className="label">Facebook link</span>
           <input className="field" {...field("facebook")} placeholder="https://www.facebook.com/yourname" />
         </label>
-        <span className="text-[14px] text-[var(--ink-2)]">Until a link is added, its icon in the website footer stays greyed out. Leave a box empty to switch it off again.</span>
+        <span className="text-[14px] text-[var(--ink-2)]">Until a link is added, its icon in the website footer stays greyed out. WhatsApp is already filled in; change it here any time.</span>
       </section>
 
       <div className="publish-bar">

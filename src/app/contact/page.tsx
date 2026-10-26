@@ -30,8 +30,8 @@ export default async function ContactPage() {
           <div key={s.label} className="grid gap-2">
             <dt className="label">{s.label}</dt>
             <dd>
-              <a href={s.href} target="_blank" rel="noreferrer" className="arrow-link">
-                Open profile
+              <a href={s.href} target="_blank" rel="noopener noreferrer" className="arrow-link">
+                {s.label === "WhatsApp" ? "Open chat" : "Open profile"}
               </a>
             </dd>
           </div>
