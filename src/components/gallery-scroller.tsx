@@ -278,7 +278,7 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
   const first = photos[0];
 
   return (
-    <section ref={sectionRef} className="gs" aria-label="Recent photographs">
+    <section ref={sectionRef} className="gs" aria-label="Recent photographs" style={{ "--gs-n": total } as React.CSSProperties}>
       <div ref={stageRef} className="gs-stage">
         <div className="gs-track">
           {photos.map((photo, i) => (

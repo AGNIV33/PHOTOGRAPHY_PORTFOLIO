@@ -23,7 +23,8 @@ function PlaceholderSheet() {
 }
 
 // The newest open photos, so the home page is never a wall of locked tiles.
-// Laptops and desktops get the scrolling gallery (7 photos); phones get the plain grid (6 photos).
+// Laptops and desktops get the scrolling gallery (the newest 10 photos that are not in an
+// album); phones get the plain grid (6 photos).
 // Both are in the page and CSS shows one of them; the images are lazy, so the hidden copy is
 // never downloaded.
 async function RecentFrames() {
@@ -35,7 +36,7 @@ async function RecentFrames() {
   if (!isBackendReady) return placeholder;
   const user = await getUser();
   const photos = await listPhotos(user, { limit: 24 });
-  const open = photos.filter((p) => !p.locked).slice(0, 7);
+  const open = photos.filter((p) => !p.locked).slice(0, 10);
   if (open.length === 0) return placeholder;
   const palettes = await Promise.all(open.map((p) => getPalette(p.swatch)));
   return (

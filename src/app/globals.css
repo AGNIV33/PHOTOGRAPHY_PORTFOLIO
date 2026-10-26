@@ -2476,7 +2476,8 @@ textarea.field {
 /* Pinned and scroll-driven, on laptops and on phones. */
 @media (prefers-reduced-motion: no-preference) {
   .gs {
-    height: 560svh;
+    /* about 77% of a screen of scrolling for each step between photographs */
+    height: calc((var(--gs-n, 7) - 1) * 77svh + 100svh);
     margin-top: var(--space-4);
     margin-bottom: var(--space-6);
   }
@@ -3388,3 +3389,4 @@ textarea.field {
   color: var(--paper);
   background: var(--safelight);
 }
+
