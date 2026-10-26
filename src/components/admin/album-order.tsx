@@ -6,12 +6,30 @@ import { reorderAlbumPhotos } from "@/app/admin/actions";
 
 type Item = { id: string; thumb: string; caption: string };
 
-// The photos of one album in the order visitors see them. Drag a photo to a new place, or use
-// the arrows (they also work on a phone). The order is saved as soon as you let go.
-export function AlbumOrder({ albumId, photos }: { albumId: string; photos: Item[] }) {
+// The photos of one album, in the order visitors see them. One strip does both jobs:
+// tap a photo to make it the album's cover, drag a photo to a new place to rearrange (the ← →
+// buttons do the same on a phone). The order is saved as soon as you let go.
+// A picture uploaded only as the cover is shown first and stays out of the order.
+export function AlbumOrder({
+  albumId,
+  photos,
+  coverOnly,
+  coverId,
+  onCover,
+  disabled,
+}: {
+  albumId: string;
+  photos: Item[];
+  coverOnly?: Item | null;
+  coverId: string | null;
+  onCover: (photoId: string) => void;
+  disabled?: boolean;
+}) {
   const router = useRouter();
   const [order, setOrder] = useState(photos);
   const latest = useRef(photos);
+  // With no cover chosen, visitors see the first photo, so show that one as the cover.
+  const activeCover = coverId ?? order[0]?.id ?? null;
   const [dragId, setDragId] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
 
@@ -59,10 +77,27 @@ export function AlbumOrder({ albumId, photos }: { albumId: string; photos: Item[
     apply(next);
   }
 
+  // Enter or Space on a photo makes it the cover (the photo is a div, not a button, because a
+  // button inside a draggable item cannot be dragged in Firefox).
+  const pickKey = (e: React.KeyboardEvent, act: () => void) => {
+    if (disabled || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    act();
+  };
+
   return (
     <div className="grid gap-2">
-      <span className="label">Order of the photos · drag to rearrange</span>
+      <span className="label">Cover photo and order · tap one for the cover, drag to rearrange</span>
       <ol className="order-grid">
+        {coverOnly && (
+          <li className="order-item" data-fixed="">
+            <div role="button" tabIndex={0} className="order-pick" aria-pressed={coverId === coverOnly.id} aria-disabled={disabled || undefined} onClick={() => !disabled && onCover(coverOnly.id)} onKeyDown={(e) => pickKey(e, () => onCover(coverOnly.id))} title="Use as the cover">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={coverOnly.thumb} alt="Cover picture (not shown in the gallery)" draggable={false} />
+            </div>
+            <span className="order-no">Cover only</span>
+          </li>
+        )}
         {order.map((p, i) => (
           <li
             key={p.id}
@@ -81,9 +116,12 @@ export function AlbumOrder({ albumId, photos }: { albumId: string; photos: Item[
               void save();
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.thumb} alt={p.caption || `Photo ${i + 1}`} draggable={false} />
+            <div role="button" tabIndex={0} className="order-pick" aria-pressed={activeCover === p.id} aria-disabled={disabled || undefined} onClick={() => !disabled && onCover(p.id)} onKeyDown={(e) => pickKey(e, () => onCover(p.id))} title="Use as the cover">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.thumb} alt={p.caption || `Photo ${i + 1}`} draggable={false} />
+            </div>
             <span className="order-no">{String(i + 1).padStart(2, "0")}</span>
+            {activeCover === p.id && <span className="order-cover">Cover</span>}
             <span className="order-arrows">
               <button type="button" onClick={() => nudge(p.id, -1)} disabled={i === 0} aria-label={`Move photo ${i + 1} earlier`}>
                 ←

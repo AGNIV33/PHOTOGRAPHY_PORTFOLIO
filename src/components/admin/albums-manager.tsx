@@ -58,30 +58,14 @@ function AlbumRowEditor({ album, index, total }: { album: Album; index: number; 
       </label>
 
       {album.photos.length > 0 && (
-        <div className="grid gap-2">
-          <span className="label">Cover photo (tap one)</span>
-          <div className="cover-picker">
-            {album.photos.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                aria-pressed={album.cover_photo_id === p.id}
-                title={p.caption || "Photo"}
-                onClick={() => run(() => setAlbumCover(album.id, p.id), "Cover changed.")}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.thumb} alt={p.caption} />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {album.photos.filter((p) => p.status === "published").length > 1 && (
         <AlbumOrder
-          key={album.photos.map((p) => p.id).join(",")}
+          key={album.photos.map((p) => p.id).join(",") + album.cover_photo_id}
           albumId={album.id}
           photos={album.photos.filter((p) => p.status === "published")}
+          coverOnly={album.photos.find((p) => p.status === "draft" && p.id === album.cover_photo_id) ?? null}
+          coverId={album.cover_photo_id}
+          disabled={pending}
+          onCover={(photoId) => run(() => setAlbumCover(album.id, photoId), "Cover changed.")}
         />
       )}
 

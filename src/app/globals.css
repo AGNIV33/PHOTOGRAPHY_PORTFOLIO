@@ -3343,3 +3343,48 @@ textarea.field {
   color: var(--ink);
   border-color: var(--safelight);
 }
+
+/* The album strip: tap for the cover, drag to rearrange */
+
+.order-pick {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.order-pick img {
+  border-width: 2px;
+}
+
+.order-pick[aria-pressed="true"] img {
+  border-color: var(--safelight);
+}
+
+.order-pick[aria-disabled="true"] {
+  cursor: progress;
+}
+
+.order-pick:focus-visible {
+  outline: 2px solid var(--safelight);
+  outline-offset: 2px;
+}
+
+.order-item[data-fixed] {
+  cursor: default;
+}
+
+.order-cover {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--safelight);
+}
