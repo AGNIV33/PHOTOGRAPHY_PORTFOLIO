@@ -24,7 +24,7 @@ const GROW = Math.log(1.24); // each photograph up the line is 24% bigger than t
 const ANGLE = (20 * Math.PI) / 180; // slope of the line
 const GAP = 0.16; // clear space between neighbours, as a share of their width
 const HOLD = 0.18; // share of each step where the row rests on a photograph
-const HOVER_DELAY = 1500; // the pointer must rest on a photograph this long (ms) before it comes forward
+const HOVER_DELAY = 1000; // the pointer must rest on a photograph this long (ms) before it comes forward
 const GLIDE = 0.09; // share of the remaining distance covered each frame (smaller = smoother, more lag)
 // Spacing along the line so that, at every resting point, neighbours are exactly one gap apart
 // whatever their size: centre distance = (half width + half width) x (1 + gap).
@@ -116,9 +116,6 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
       const D = itemRefs.current[0]?.offsetWidth || 320;
       const W = st.clientWidth;
       const H = st.clientHeight;
-      // Laptop: the focus point sits right of centre. Phone: lower middle, under the panel.
-      const fx = mobile ? 0 : W * 0.14;
-      const fy = mobile ? H * 0.14 : -H * 0.14;
       const lean = mobile ? 0.6 : 1; // 3D tilt is gentler on a phone
 
       // Scroll position in photographs, resting briefly on each one.
@@ -126,11 +123,25 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
       const k = Math.floor(q);
       const shift = Math.min(total - 1, k + easeInOut(Math.min(1, Math.max(0, (q - k - HOLD / 2) / (1 - HOLD)))));
 
-      // The caption panel's box (inside the stage). Photographs under it fade out.
+      // Where the photograph in focus sits. Laptop: right of centre, and for the very last
+      // photograph a little closer to the middle. Phone: the middle.
+      const lastBlend = Math.min(1, Math.max(0, shift - (total - 2)));
+      const fx = mobile ? 0 : W * (0.14 - 0.08 * lastBlend);
+
+      // Height of the focus point: the photograph just before the focused one sits below and to
+      // the left, so lift or lower the row to keep that one clear of the caption above it and
+      // fully on screen below it. (This is what stops photographs overlapping the caption.)
       const panel = panelRef.current;
-      const box = panel
-        ? { l: panel.offsetLeft - 32, t: panel.offsetTop - 32, r: panel.offsetLeft + panel.offsetWidth + 32, b: panel.offsetTop + panel.offsetHeight + 32 }
-        : null;
+      const panelBottom = panel ? panel.offsetTop + panel.offsetHeight : 0;
+      // Its height on screen: the tallest photograph's height plus what the sideways tilt adds.
+      const tallest = Math.max(...itemRefs.current.map((el) => el?.offsetHeight ?? 0), D * 0.5);
+      const prevHeight = (tallest + 0.22 * D) * Math.exp(-grow);
+      const prevDrop = Math.abs(((D * spacing) / grow) * (Math.exp(-grow) - 1)) * slope; // how far below the focus point it sits
+      const fyMin = panelBottom + 14 + prevHeight / 2 - H / 2 - prevDrop;
+      const fyMax = H / 2 - 14 - prevHeight / 2 - prevDrop;
+      const fyWanted = mobile ? H * 0.14 : -H * 0.14;
+      // If there isn't room for both (a short window), share the shortfall between top and bottom.
+      const fy = fyMin <= fyMax ? Math.min(Math.max(fyWanted, fyMin), fyMax) : (fyMin + fyMax) / 2;
 
       let nearest = 0;
       let best = Infinity;
@@ -151,21 +162,25 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
         el.style.transform = `translate3d(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px), 0) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${s.toFixed(4)})`;
         // Bigger photographs (further up the line) sit in front; a lifted one comes to the very front.
         el.style.zIndex = String(l > 0.5 ? 190 : 50 + Math.round(t * 10));
-        // A photograph that would sit under the caption fades out instead of overlapping it.
-        let underPanel = false;
-        if (box) {
-          const hw = ((D * size * (1 + 0.08 * l)) / 2) * 1.3; // half width, with room for the tilt
-          const hh = ((el.offsetHeight * size * (1 + 0.08 * l)) / 2) * 1.3;
-          const cx = W / 2 + x;
-          const cy = H / 2 + y;
-          underPanel = cx + hw > box.l && cx - hw < box.r && cy + hh > box.t && cy - hh < box.b;
-        }
-        el.style.opacity = size < 0.3 || underPanel ? "0" : "1";
+        el.style.opacity = size < 0.3 ? "0" : "1";
         if (Math.abs(t) < best) {
           best = Math.abs(t);
           nearest = i;
         }
       });
+
+      // Safety net for very short windows where the row can't fit above and below the caption:
+      // a photograph that really sits over the caption fades out. Measured after the move.
+      if (panel) {
+        const pr = panel.getBoundingClientRect();
+        itemRefs.current.forEach((el) => {
+          if (!el || el.style.opacity === "0") return;
+          const r = el.getBoundingClientRect();
+          const overW = Math.min(r.right, pr.right + 8) - Math.max(r.left, pr.left - 8);
+          const overH = Math.min(r.bottom, pr.bottom + 8) - Math.max(r.top, pr.top - 8);
+          if (overW > 70 && overH > 70) el.style.opacity = "0";
+        });
+      }
       setFocus(nearest);
     };
 
