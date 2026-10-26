@@ -45,7 +45,9 @@ function friendlyError(e: unknown) {
 
 export function ContactForm({ directEmail }: { directEmail: string }) {
   const [v, setV] = useState<ContactValues>(BLANK);
-  const [honey, setHoney] = useState(""); // robots fill this in; people never see it
+  // Robots tick this; people never see it. It is a tick box on purpose: browsers and password
+  // managers auto-fill text boxes named like "company" or "website", but they never tick boxes.
+  const [honey, setHoney] = useState(false);
   const [error, setError] = useState<{ field?: ContactField; text: string } | null>(null);
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const openedAt = useRef(0);
@@ -66,6 +68,7 @@ export function ContactForm({ directEmail }: { directEmail: string }) {
 
     // Robots: act as if it worked, send nothing.
     if (honey || Date.now() - openedAt.current < MIN_TIME_ON_PAGE_MS) {
+      console.warn("Contact form: looked like a robot, nothing was sent");
       setState("sent");
       return;
     }
@@ -163,8 +166,8 @@ export function ContactForm({ directEmail }: { directEmail: string }) {
       {/* A trap for robots. People cannot see it or reach it with the keyboard. */}
       <div className="contact-trap" aria-hidden="true">
         <label>
-          Leave this empty
-          <input type="text" name="company" tabIndex={-1} autoComplete="off" value={honey} onChange={(e) => setHoney(e.target.value)} />
+          Leave this unticked
+          <input type="checkbox" name="contact_robot_check" tabIndex={-1} autoComplete="off" checked={honey} onChange={(e) => setHoney(e.target.checked)} />
         </label>
       </div>
 
