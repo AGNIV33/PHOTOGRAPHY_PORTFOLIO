@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { GalleryScroller } from "@/components/gallery-scroller";
 import { Hero } from "@/components/hero";
 import { PhotoFrame } from "@/components/photo-frame";
-import { PhotoGrid } from "@/components/photo-tile";
 import { ProtectedImage } from "@/components/protected-image";
 import { getUser } from "@/lib/auth";
 import { isBackendReady } from "@/lib/env";
@@ -20,14 +20,19 @@ function PlaceholderSheet() {
   );
 }
 
-// Newest open photos first, so the home page is never a wall of locked tiles.
+// The 7 newest open photos, so the home page is never a wall of locked tiles.
 async function RecentFrames() {
-  if (!isBackendReady) return <PlaceholderSheet />;
+  const placeholder = (
+    <div className="wrap">
+      <PlaceholderSheet />
+    </div>
+  );
+  if (!isBackendReady) return placeholder;
   const user = await getUser();
   const photos = await listPhotos(user, { limit: 24 });
-  const open = photos.filter((p) => !p.locked).slice(0, 6);
-  if (open.length === 0) return <PlaceholderSheet />;
-  return <PhotoGrid photos={open} />;
+  const open = photos.filter((p) => !p.locked).slice(0, 7);
+  if (open.length === 0) return placeholder;
+  return <GalleryScroller photos={open} />;
 }
 
 async function AlbumRows() {
@@ -84,10 +89,16 @@ export default function Home() {
             </span>
           </Link>
         </div>
-        <Suspense fallback={<PlaceholderSheet />}>
-          <RecentFrames />
-        </Suspense>
       </section>
+      <Suspense
+        fallback={
+          <div className="wrap">
+            <PlaceholderSheet />
+          </div>
+        }
+      >
+        <RecentFrames />
+      </Suspense>
 
       {/* Albums: each series gets a long row */}
       <section className="wrap pt-24 md:pt-32">

@@ -3,6 +3,7 @@ import { Archivo, Cormorant_Garamond, JetBrains_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { IrisLoader, IrisView } from "@/components/iris-loader";
 import { SiteHeader, SiteHeaderView } from "@/components/site-header";
+import { SmoothScroll } from "@/components/smooth-scroll";
 import { SiteFooter } from "@/components/site-footer";
 import { site } from "@/config/site";
 import "./globals.css";
@@ -46,6 +47,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             is there from the first paint. Without scripts it is simply not shown. */}
         <Suspense fallback={<IrisView />}>
           <IrisLoader />
+        </Suspense>
+        <Suspense fallback={null}>
+          <SmoothScroll />
         </Suspense>
         <noscript>
           <style>{".iris-loader{display:none!important}"}</style>

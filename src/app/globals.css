@@ -2329,3 +2329,250 @@ select.field {
   font-size: 5px;
   fill: var(--safelight);
 }
+
+/* ---------- Home gallery: photographs along a rising line ---------- */
+
+.gs {
+  position: relative;
+}
+
+.gs-item {
+  display: block;
+  transform-style: preserve-3d;
+}
+
+.gs-item .protected {
+  background: var(--paper-2);
+  box-shadow: 0 28px 60px rgb(0 0 0 / 0.55);
+}
+
+.gs-cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.gs-kicker {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+}
+
+.gs-title {
+  font-size: clamp(42px, 5.4vw, 88px);
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* Thin-ruled rows: label on the left, value on the right. */
+.gs-facts {
+  display: grid;
+  border-top: 1px solid var(--hairline);
+}
+
+.gs-facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: 10px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.gs-facts dd {
+  font-size: 14px;
+  text-align: right;
+  color: var(--ink);
+}
+
+/* Hand-drawn ring around a photograph on hover. */
+.gs-scribble {
+  position: absolute;
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.gs-scribble path {
+  fill: none;
+  stroke: var(--safelight);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 760;
+  stroke-dashoffset: 760;
+  transition: stroke-dashoffset 700ms var(--ease);
+}
+
+.gs-item:hover .gs-scribble path,
+.gs-item:focus-visible .gs-scribble path {
+  stroke-dashoffset: 0;
+}
+
+/* The small "View" label that follows the pointer over a photograph. */
+.gs-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 300;
+  margin: 14px 0 0 14px;
+  padding: 6px 10px;
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--safelight);
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms var(--ease);
+}
+
+.gs-cursor[data-on] {
+  opacity: 1;
+}
+
+.gs-swap > * {
+  animation: gs-swap 520ms var(--ease) both;
+}
+
+.gs-swap > :nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.gs-swap > :nth-child(3) {
+  animation-delay: 80ms;
+}
+
+@keyframes gs-swap {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.gs-progress {
+  display: block;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.gs-progress span {
+  display: block;
+  height: 100%;
+  background: var(--safelight);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+/* Laptops and desktops: pinned and scroll-driven. */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .gs {
+    height: 560svh;
+    margin-top: var(--space-4);
+  }
+
+  .gs-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  .gs-track {
+    position: absolute;
+    inset: 0;
+    perspective: 1800px;
+    perspective-origin: 55% 40%;
+  }
+
+  .gs-item {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(26vw, 440px);
+    opacity: 0;
+    will-change: transform;
+    /* If scripts never run, show the photographs anyway after a moment. */
+    animation: gs-show 1ms linear 3s forwards;
+  }
+
+  .gs-cap {
+    display: none;
+  }
+
+  .gs-info {
+    position: absolute;
+    left: var(--gutter);
+    top: 104px;
+    z-index: 200;
+    display: grid;
+    gap: var(--space-3);
+    max-width: min(30ch, 36vw);
+  }
+
+  .gs-all {
+    position: absolute;
+    right: var(--gutter);
+    bottom: 64px;
+    z-index: 200;
+  }
+
+  .gs-progress {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: 36px;
+    z-index: 200;
+  }
+}
+
+@keyframes gs-show {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Phones, and anyone who turned animations off: a row to swipe through. */
+@media (max-width: 767px), (prefers-reduced-motion: reduce) {
+  .gs-track {
+    display: flex;
+    gap: var(--space-4);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-inline: var(--gutter);
+    padding-bottom: var(--space-3);
+    scrollbar-width: none;
+  }
+
+  .gs-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gs-item {
+    position: relative;
+    flex: none;
+    width: min(74vw, 340px);
+    scroll-snap-align: center;
+    transform: none !important;
+    opacity: 1 !important;
+    animation: none;
+  }
+
+  .gs-info,
+  .gs-progress,
+  .gs-cursor,
+  .gs-scribble {
+    display: none;
+  }
+
+  .gs-all {
+    margin: var(--space-4) var(--gutter) 0;
+    width: fit-content;
+  }
+}

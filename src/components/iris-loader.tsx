@@ -191,6 +191,7 @@ export function IrisLoader() {
     const el = root.current;
     if (!el) return;
     el.dataset.on = "1";
+    window.dispatchEvent(new Event("iris:show")); // lets smooth scrolling pause
     el.style.animation = "none"; // scripts are alive, so the 10-second safety timer is not needed
     el.style.opacity = "";
     el.style.transition = "";
@@ -204,6 +205,7 @@ export function IrisLoader() {
   const hide = () => {
     window.clearTimeout(safety.current);
     if (root.current) root.current.dataset.on = "0";
+    window.dispatchEvent(new Event("iris:hide"));
   };
 
   const tween = (id: number, ms: number, step: (t: number) => void) =>

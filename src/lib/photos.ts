@@ -38,6 +38,8 @@ export type AlbumRow = {
 
 export type PhotoView = Omit<PhotoRow, "public_id"> & {
   locked: boolean;
+  // 720px, for the home page.
+  card: string | null;
   thumb: string | null;
   large: string | null;
 };
@@ -64,6 +66,7 @@ export function toView(row: PhotoRow, user: User | null): PhotoView {
   return {
     ...rest,
     locked,
+    card: locked ? null : imageUrl(public_id, "card"),
     thumb: locked ? null : imageUrl(public_id, "thumb"),
     large: locked ? null : imageUrl(public_id, "large"),
   };

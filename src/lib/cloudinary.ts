@@ -37,11 +37,12 @@ export function signUpload() {
   };
 }
 
-type Size = "thumb" | "large";
+type Size = "card" | "thumb" | "large";
 
 // A signed, watermarked, web-size link. Delivered files carry no camera or GPS metadata.
+// "card" is the 720px size used on the home page.
 export function imageUrl(publicId: string, size: Size) {
-  const width = size === "thumb" ? 900 : 2000;
+  const width = size === "card" ? 720 : size === "thumb" ? 900 : 2000;
   return cloudinary.url(publicId, {
     type: DELIVERY_TYPE,
     sign_url: true,
@@ -50,15 +51,15 @@ export function imageUrl(publicId: string, size: Size) {
       {
         overlay: {
           font_family: "Arial",
-          font_size: size === "thumb" ? 16 : 30,
+          font_size: size === "large" ? 30 : size === "thumb" ? 16 : 14,
           font_weight: "bold",
           text: `© ${site.name}`,
         },
         color: "#ffffff",
         opacity: 45,
         gravity: "south_east",
-        x: size === "thumb" ? 12 : 28,
-        y: size === "thumb" ? 10 : 24,
+        x: size === "large" ? 28 : 12,
+        y: size === "large" ? 24 : 10,
       },
       { fetch_format: "auto", quality: "auto" },
     ],
