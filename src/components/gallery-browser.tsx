@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 import { countPlaces, countTags, locationOf, sortedCategories } from "@/lib/categories";
 import type { PhotoView } from "@/lib/photos";
+import { MoveToAlbum } from "./admin/move-to-album";
 import { Select } from "./select";
 import { PhotoGrid } from "./photo-tile";
 
 // The Work page: filter buttons by category (Black & white, Colour, Street, ...) and a place
 // list, then the photographs. The same for visitors and for the photographer.
-export function GalleryBrowser({ photos }: { photos: PhotoView[] }) {
+export function GalleryBrowser({ photos, albums }: { photos: PhotoView[]; albums?: { id: string; title: string }[] }) {
   const [category, setCategory] = useState<string | null>(null);
   const [place, setPlace] = useState("");
 
@@ -69,7 +70,7 @@ export function GalleryBrowser({ photos }: { photos: PhotoView[] }) {
       )}
 
       {shown.length > 0 ? (
-        <PhotoGrid photos={shown} />
+        <PhotoGrid photos={shown} extra={albums ? (p) => <MoveToAlbum photoId={p.id} albums={albums} /> : undefined} />
       ) : (
         <p className="serif text-[26px] text-[var(--ink-2)]">No photographs match this filter.</p>
       )}

@@ -273,3 +273,7 @@ alter table public.site_settings add column if not exists whatsapp text not null
 -- Categories for photos (Black & white, Colour, Street, Nature, ...).
 alter table public.photos add column if not exists tags text[] not null default '{}';
 create index if not exists photos_tags_idx on public.photos using gin (tags);
+
+-- The order of the photos inside an album.
+alter table public.photos add column if not exists album_position integer;
+create index if not exists photos_album_position_idx on public.photos (album_id, album_position);

@@ -43,6 +43,18 @@ function clean(input: PhotoInput): PhotoInput {
   };
 }
 
+// The next free spot at the end of an album, so photos added later come last.
+async function nextAlbumPosition(albumId: string) {
+  const { data } = await createAdminClient()
+    .from("photos")
+    .select("album_position")
+    .eq("album_id", albumId)
+    .not("album_position", "is", null)
+    .order("album_position", { ascending: false })
+    .limit(1);
+  return ((data?.[0]?.album_position as number | undefined) ?? -1) + 1;
+}
+
 // ---------- Photos ----------
 
 export async function getUploadSignature() {
@@ -64,9 +76,10 @@ export async function createPhoto(
       base.tags = mergeTags(base.tags, await analyzePhoto(upload.public_id));
     } catch {}
   }
+  const album_position = base.album_id ? await nextAlbumPosition(base.album_id) : null;
   const { data, error } = await createAdminClient()
     .from("photos")
-    .insert({ ...base, ...upload })
+    .insert({ ...base, ...upload, album_position })
     .select("id")
     .single();
   if (error) {
@@ -79,7 +92,14 @@ export async function createPhoto(
 
 export async function updatePhoto(id: string, input: PhotoInput) {
   await requireAdmin();
-  const { error } = await createAdminClient().from("photos").update(clean(input)).eq("id", id);
+  const next = clean(input);
+  const before = await adminGetPhoto(id);
+  const fields: Record<string, unknown> = { ...next };
+  // Moved into another album: it goes to the end of that album.
+  if (before && before.album_id !== next.album_id) {
+    fields.album_position = next.album_id ? await nextAlbumPosition(next.album_id) : null;
+  }
+  const { error } = await createAdminClient().from("photos").update(fields).eq("id", id);
   if (error) throw new Error(error.message);
 }
 
@@ -143,6 +163,24 @@ export async function moveAlbum(id: string, direction: -1 | 1) {
   if (i < 0 || j < 0 || j >= ids.length) return;
   [ids[i], ids[j]] = [ids[j], ids[i]];
   await Promise.all(ids.map((albumId, position) => db.from("albums").update({ position }).eq("id", albumId)));
+}
+
+// Saves the order of the photos inside an album (the first id is shown first).
+export async function reorderAlbumPhotos(albumId: string, orderedIds: string[]) {
+  await requireAdmin();
+  const db = createAdminClient();
+  const { data, error } = await db.from("photos").select("id").eq("album_id", albumId);
+  if (error) throw new Error(error.message);
+  const inAlbum = new Set((data ?? []).map((r) => r.id as string));
+  const ids = orderedIds.filter((id, i) => inAlbum.has(id) && orderedIds.indexOf(id) === i);
+  // Anything not mentioned keeps its place after the listed ones.
+  const rest = [...inAlbum].filter((id) => !ids.includes(id));
+  await Promise.all(
+    [...ids, ...rest].map(async (id, position) => {
+      const { error: e } = await db.from("photos").update({ album_position: position }).eq("id", id).eq("album_id", albumId);
+      if (e) throw new Error(e.message);
+    }),
+  );
 }
 
 // Photos in a deleted album are kept; they just no longer belong to an album.
@@ -222,9 +260,14 @@ export async function bulkEditPhotos(ids: string[], patch: BulkPatch) {
   if (patch.visibility) fields.visibility = patch.visibility === "members" ? "members" : "public";
   if (patch.status) fields.status = patch.status === "draft" ? "draft" : "published";
   const touchesTags = add.length > 0 || remove.size > 0;
+  // Photos moved into an album go to the end of it, in the order they were picked.
+  const toAlbum = patch.album_id ? patch.album_id : null;
+  const firstSpot = toAlbum ? await nextAlbumPosition(toAlbum) : 0;
+  const order = new Map(list.map((id, i) => [id, i]));
   await Promise.all(
     (data ?? []).map(async (row) => {
       const update: Record<string, unknown> = { ...fields };
+      if (patch.album_id !== undefined) update.album_position = toAlbum ? firstSpot + (order.get(row.id as string) ?? 0) : null;
       if (touchesTags) {
         let tags = cleanTags(((row.tags as string[] | null) ?? []).filter((t) => !remove.has(t)));
         const colour = add.includes(BW) ? BW : add.includes(COLOUR) ? COLOUR : null;

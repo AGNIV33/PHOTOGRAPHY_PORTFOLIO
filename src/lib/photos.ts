@@ -24,6 +24,7 @@ export type PhotoRow = {
   visibility: Visibility;
   status: "draft" | "published";
   tags: string[];
+  album_position: number | null;
   created_at: string;
 };
 
@@ -60,7 +61,7 @@ export type CommentRow = {
 };
 
 const PHOTO_FIELDS =
-  "id, public_id, width, height, caption, place, taken_at, camera, lens, focal_length, aperture, shutter, iso, album_id, visibility, status, tags, created_at";
+  "id, public_id, width, height, caption, place, taken_at, camera, lens, focal_length, aperture, shutter, iso, album_id, visibility, status, tags, album_position, created_at";
 
 // Members-only photos get no image link unless someone is signed in.
 export function toView(row: PhotoRow, user: User | null): PhotoView {
@@ -76,17 +77,22 @@ export function toView(row: PhotoRow, user: User | null): PhotoView {
   };
 }
 
+// Photos in an album are shown only inside that album, in the order set in the dashboard.
+// Everywhere else (Work page, home page) only photos that are not in an album are listed.
 export async function listPhotos(user: User | null, opts: { albumId?: string; limit?: number } = {}) {
   if (!isBackendReady) return [];
   const supabase = await createClient();
-  let q = supabase
-    .from("photos")
-    .select(PHOTO_FIELDS)
-    .eq("status", "published")
+  let q = supabase.from("photos").select(PHOTO_FIELDS).eq("status", "published");
+  if (opts.albumId) {
+    q = q
+      .eq("album_id", opts.albumId)
+      .order("album_position", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
+  } else {
     // Newest upload first; the id only settles ties so the order never jumps around.
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false });
-  if (opts.albumId) q = q.eq("album_id", opts.albumId);
+    q = q.is("album_id", null).order("created_at", { ascending: false }).order("id", { ascending: false });
+  }
   if (opts.limit) q = q.limit(opts.limit);
   const { data } = await q;
   return ((data ?? []) as PhotoRow[]).map((r) => toView(r, user));
@@ -117,7 +123,7 @@ export async function listAlbums(user: User | null): Promise<AlbumView[]> {
     coverOnly = (data ?? []) as PhotoRow[];
   }
   return albumRows.map((a) => {
-    const inAlbum = rows.filter((p) => p.album_id === a.id);
+    const inAlbum = inAlbumOrder(rows.filter((p) => p.album_id === a.id));
     // Cover: the chosen photo, else the first open photo, so locked covers are rare.
     const coverRow =
       inAlbum.find((p) => p.id === a.cover_photo_id) ??
@@ -164,6 +170,15 @@ export async function adminListPhotos() {
     .order("created_at", { ascending: false })
     .order("id", { ascending: false });
   return (data ?? []) as PhotoRow[];
+}
+
+// Photos of one album in their arranged order.
+export function inAlbumOrder<T extends { album_position: number | null; created_at: string }>(rows: T[]) {
+  return [...rows].sort((a, b) => {
+    const pa = a.album_position ?? Number.MAX_SAFE_INTEGER;
+    const pb = b.album_position ?? Number.MAX_SAFE_INTEGER;
+    return pa - pb || b.created_at.localeCompare(a.created_at);
+  });
 }
 
 export async function adminGetPhoto(id: string) {

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { AdminGate } from "@/components/admin/admin-gate";
 import { AlbumsManager } from "@/components/admin/albums-manager";
 import { imageUrl } from "@/lib/cloudinary";
-import { adminListAlbums, adminListPhotos } from "@/lib/photos";
+import { adminListAlbums, adminListPhotos, inAlbumOrder } from "@/lib/photos";
 
 async function Albums() {
   const [albums, photos] = await Promise.all([adminListAlbums(), adminListPhotos()]);
@@ -12,9 +12,12 @@ async function Albums() {
     story: a.story,
     slug: a.slug,
     cover_photo_id: a.cover_photo_id,
-    photos: photos
-      .filter((p) => p.album_id === a.id)
-      .map((p) => ({ id: p.id, caption: p.caption, thumb: imageUrl(p.public_id, "thumb") })),
+    photos: inAlbumOrder(photos.filter((p) => p.album_id === a.id)).map((p) => ({
+      id: p.id,
+      caption: p.caption,
+      status: p.status,
+      thumb: imageUrl(p.public_id, "thumb"),
+    })),
   }));
   return <AlbumsManager albums={data} />;
 }

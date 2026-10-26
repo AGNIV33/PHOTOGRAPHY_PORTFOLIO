@@ -28,6 +28,8 @@ export function PhotoManager({ photos, albums }: { photos: ManagedPhoto[]; album
   const router = useRouter();
   const [category, setCategory] = useState<string | null>(null);
   const [place, setPlace] = useState("");
+  // "" = every album, "none" = photos that are not in an album, otherwise one album's id
+  const [albumFilter, setAlbumFilter] = useState("");
   const [selecting, setSelecting] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [panel, setPanel] = useState<Panel>(null);
@@ -39,8 +41,14 @@ export function PhotoManager({ photos, albums }: { photos: ManagedPhoto[]; album
   const categories = useMemo(() => sortedCategories(countTags(photos)), [photos]);
   const places = useMemo(() => countPlaces(photos), [photos]);
   const shown = useMemo(
-    () => photos.filter((p) => (!category || p.tags.includes(category)) && (!place || locationOf(p.place) === place)),
-    [photos, category, place],
+    () =>
+      photos.filter(
+        (p) =>
+          (!category || p.tags.includes(category)) &&
+          (!place || locationOf(p.place) === place) &&
+          (!albumFilter || (albumFilter === "none" ? !p.albumId : p.albumId === albumFilter)),
+      ),
+    [photos, category, place, albumFilter],
   );
 
   const ids = [...picked].filter((id) => photos.some((p) => p.id === id));
@@ -114,7 +122,7 @@ export function PhotoManager({ photos, albums }: { photos: ManagedPhoto[]; album
         </div>
       </div>
 
-      {(categories.length > 0 || places.length > 1) && (
+      {(categories.length > 0 || places.length > 1 || albums.length > 0) && (
         <div className="filters" role="group" aria-label="Filter your photos" style={{ marginBottom: 0 }}>
           <button type="button" className="chip" aria-pressed={!category} onClick={() => setCategory(null)}>
             All <small>{photos.length}</small>
@@ -124,6 +132,21 @@ export function PhotoManager({ photos, albums }: { photos: ManagedPhoto[]; album
               {name} <small>{count}</small>
             </button>
           ))}
+          {albums.length > 0 && (
+            <div className="filter-place" style={{ marginLeft: 0 }}>
+              <Select
+                variant="box"
+                ariaLabel="Show photos from one album"
+                value={albumFilter}
+                onChange={setAlbumFilter}
+                options={[
+                  { value: "", label: "All albums" },
+                  { value: "none", label: "Not in an album" },
+                  ...albums.map((a) => ({ value: a.id, label: a.title })),
+                ]}
+              />
+            </div>
+          )}
           {places.length > 1 && (
             <div className="filter-place">
               <Select

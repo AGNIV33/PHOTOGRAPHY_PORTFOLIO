@@ -5,7 +5,7 @@ import type { PhotoView } from "@/lib/photos";
 import { ProtectedImage } from "./protected-image";
 
 // One photo in a grid. Members-only photos show as a blurred tile until the visitor signs in.
-export function PhotoTile({ photo, index }: { photo: PhotoView; index: number }) {
+export function PhotoTile({ photo, index, extra }: { photo: PhotoView; index: number; extra?: React.ReactNode }) {
   const number = String(index + 1).padStart(2, "0");
   return (
     <figure className="tile" style={{ "--r": photo.width / Math.max(photo.height, 1) } as React.CSSProperties}>
@@ -30,17 +30,18 @@ export function PhotoTile({ photo, index }: { photo: PhotoView; index: number })
           {!photo.locked && photo.place ? ` · ${photo.place}` : ""}
         </span>
       </figcaption>
+      {extra}
     </figure>
   );
 }
 
 // Newest photos first, left to right. Every photo keeps its own shape; the photos in one row
 // are scaled to the same height, so the tops, bottoms and captions line up (see .justified).
-export function PhotoGrid({ photos }: { photos: PhotoView[] }) {
+export function PhotoGrid({ photos, extra }: { photos: PhotoView[]; extra?: (photo: PhotoView) => React.ReactNode }) {
   return (
     <div className="justified">
       {photos.map((photo, index) => (
-        <PhotoTile key={photo.id} photo={photo} index={index} />
+        <PhotoTile key={photo.id} photo={photo} index={index} extra={extra?.(photo)} />
       ))}
     </div>
   );

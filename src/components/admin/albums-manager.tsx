@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createAlbum, deleteAlbum, moveAlbum, setAlbumCover, updateAlbum } from "@/app/admin/actions";
+import { AlbumOrder } from "./album-order";
 import { AlbumUploaderPanel, useAlbumUploader } from "./album-uploader";
 
 type Album = {
@@ -11,7 +12,7 @@ type Album = {
   story: string;
   slug: string;
   cover_photo_id: string | null;
-  photos: { id: string; thumb: string; caption: string }[];
+  photos: { id: string; thumb: string; caption: string; status: "draft" | "published" }[];
 };
 
 function AlbumRowEditor({ album, index, total }: { album: Album; index: number; total: number }) {
@@ -74,6 +75,14 @@ function AlbumRowEditor({ album, index, total }: { album: Album; index: number; 
             ))}
           </div>
         </div>
+      )}
+
+      {album.photos.filter((p) => p.status === "published").length > 1 && (
+        <AlbumOrder
+          key={album.photos.map((p) => p.id).join(",")}
+          albumId={album.id}
+          photos={album.photos.filter((p) => p.status === "published")}
+        />
       )}
 
       <details className="exif-details">

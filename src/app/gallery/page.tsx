@@ -4,9 +4,9 @@ import { Suspense } from "react";
 import { EmptyState, PageHead } from "@/components/page-head";
 import { PhotoFrame } from "@/components/photo-frame";
 import { GalleryBrowser } from "@/components/gallery-browser";
-import { getUser } from "@/lib/auth";
+import { getUser, isAdmin } from "@/lib/auth";
 import { isBackendReady } from "@/lib/env";
-import { listPhotos } from "@/lib/photos";
+import { adminListAlbums, listPhotos } from "@/lib/photos";
 import { frames } from "@/lib/placeholders";
 
 export const metadata: Metadata = { title: "Work" };
@@ -32,6 +32,8 @@ async function Gallery() {
   }
   const user = await getUser();
   const photos = await listPhotos(user);
+  // The photographer gets a "Move to album" button under each photo.
+  const albums = isAdmin(user) ? (await adminListAlbums()).map((a) => ({ id: a.id, title: a.title })) : undefined;
   if (photos.length === 0) {
     return <EmptyState title="No photos yet." body="New photographs will appear here soon." />;
   }
@@ -44,7 +46,7 @@ async function Gallery() {
           <Link href="/signin?next=/gallery" className="text-[var(--safelight)] underline">Sign in to see all</Link>
         </p>
       )}
-      <GalleryBrowser photos={photos} />
+      <GalleryBrowser photos={photos} albums={albums} />
     </>
   );
 }
@@ -52,7 +54,7 @@ async function Gallery() {
 export default function GalleryPage() {
   return (
     <div className="wrap">
-      <PageHead index="01" title="Work" intro="Every photograph, newest first." />
+      <PageHead index="01" title="Work" intro="Newest first. Photographs that belong to an album are shown in that album." />
       <WorkTabs />
       <Suspense fallback={<p className="label">Loading photographs…</p>}>
         <Gallery />
