@@ -10,15 +10,24 @@
 4. **Authentication → Email Templates** (optional, makes the sign-in email match the site).
    New free projects ignore custom templates until **Custom SMTP** is on
    (Authentication → Emails → SMTP Settings; e.g. Gmail: smtp.gmail.com, port 465, a Gmail App Password):
-   open **Magic Link** and **Confirm signup**, set the subject written at the top of
-   `supabase/email-templates/magic-link.html` / `confirm-signup.html`, paste the file into the message body, Save.
+   see "Accounts" below for which template file goes where.
 5. **Project Settings → API Keys**: copy Project URL, Publishable key, Secret key.
+
+## Accounts (email + password)
+- **SQL Editor**: run `supabase/accounts.sql` once (profiles table, admin rules).
+- **Authentication → Sign In / Providers → Email**: *Confirm email* ON; minimum password length 8;
+  password requirements "Letters and digits".
+- **Authentication → Emails → SMTP Settings**: switch on Custom SMTP (sign-up emails are blocked
+  to 2 an hour without it, and custom templates are ignored).
+- **Email Templates**: paste `supabase/email-templates/confirm-signup.html` into *Confirm signup*
+  and `reset-password.html` into *Reset Password* (subjects are written at the top of each file).
+- Admins are fixed in `src/config/admins.ts` and `public.is_admin_email` in `accounts.sql`.
 
 ## 2. Cloudinary (photos)
 Dashboard → copy Cloud name, API Key, API Secret.
 
 ## 3. Keys file
-Copy `.env.example` to `.env.local` and fill every line. `ADMIN_EMAILS` = the photographer's email.
+Copy `.env.example` to `.env.local` and fill every line. The admin emails are fixed in `src/config/admins.ts`.
 Restart the site (`Ctrl+C`, then `npm run dev`).
 
 ## 4. Live site (Vercel)

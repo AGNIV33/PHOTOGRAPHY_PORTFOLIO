@@ -23,10 +23,3 @@ export const isCloudinaryConfigured = Boolean(
 );
 
 export const isBackendReady = isSupabaseConfigured && isCloudinaryConfigured && Boolean(supabaseSecretKey);
-
-export function adminEmails(): string[] {
-  return read("ADMIN_EMAILS")
-    .split(",")
-    .map((e) => e.trim().replace(/^["'<]|["'>]$/g, "").toLowerCase())
-    .filter(Boolean);
-}

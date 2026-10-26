@@ -1,104 +1,140 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { PasswordField, FormMessage } from "@/components/auth/fields";
+import { passwordProblem } from "@/lib/password";
 import { createClient } from "@/lib/supabase/browser";
 
-// The sign-in email lands here. Two kinds of link are handled:
-// - Supabase's own email: the session arrives in the part of the address after "#".
-// - Our email design: it carries a token_hash, used only when the button is pressed,
-//   so email scanners that open links in advance can't use it up.
+// Links in account emails land here.
+// - mode=verified: the sign-up email. Supabase has already marked the email as verified;
+//   we don't keep the session, the person signs in with their password.
+// - mode=reset: the forgot-password email. The link signs in just long enough to choose
+//   a new password, then signs out again.
 
-function safeNext(next: string | null) {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
-}
+type View = "working" | "verified" | "reset" | "saved" | "error";
 
 function friendly(code: string | null, description: string | null) {
   if (code === "otp_expired" || /expired|invalid/i.test(description ?? "")) {
-    return "This sign-in link has expired or was already used. Links work once, for one hour.";
+    return "This link has expired or was already used. Links work once, for one hour.";
   }
-  return description || "This sign-in link didn't work.";
+  return description || "This link didn't work.";
 }
 
 export function FinishSignIn() {
-  const router = useRouter();
   const params = useSearchParams();
-  const next = safeNext(params.get("next"));
-  const tokenHash = params.get("token_hash");
-  const [state, setState] = useState<"working" | "button" | "error">(tokenHash ? "button" : "working");
+  const mode = params.get("mode");
+  const [view, setView] = useState<View>("working");
   const [error, setError] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [formError, setFormError] = useState("");
+  const [busy, setBusy] = useState(false);
   const started = useRef(false);
 
   useEffect(() => {
-    if (started.current || tokenHash) return;
+    if (started.current) return;
     started.current = true;
     const hash = new URLSearchParams(window.location.hash.slice(1));
+    // Keep tokens out of the address bar and history.
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    const errCode = hash.get("error_code") ?? params.get("error_code");
+    const errText = hash.get("error_description") ?? params.get("error_description");
     const access_token = hash.get("access_token");
     const refresh_token = hash.get("refresh_token");
-    (async () => {
-      const supabase = createClient();
-      if (access_token && refresh_token) {
-        const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-        if (!error) {
-          window.history.replaceState(null, "", window.location.pathname);
-          router.replace(next);
-          router.refresh();
-          return;
-        }
-        setError(friendly(null, error.message));
-      } else {
-        // Already signed in (for example, the link was opened twice)? Then just continue.
-        const { data } = await supabase.auth.getUser();
-        if (data.user) {
-          router.replace(next);
-          return;
-        }
-        setError(friendly(hash.get("error_code") ?? params.get("error_code"), hash.get("error_description") ?? params.get("error_description")));
-      }
-      setState("error");
-    })();
-  }, [next, params, router, tokenHash]);
 
-  async function confirm() {
-    setState("working");
-    const { error } = await createClient().auth.verifyOtp({ token_hash: tokenHash!, type: "email" });
+    (async () => {
+      if (errCode || errText) {
+        setError(friendly(errCode, errText));
+        setView("error");
+        return;
+      }
+      if (mode === "reset") {
+        if (!access_token || !refresh_token) {
+          setError(friendly("otp_expired", null));
+          setView("error");
+          return;
+        }
+        const { error } = await createClient().auth.setSession({ access_token, refresh_token });
+        if (error) {
+          setError(friendly(null, error.message));
+          setView("error");
+        } else {
+          setView("reset");
+        }
+        return;
+      }
+      // Sign-up verification (and any older link): the email is verified; sign in next.
+      setView("verified");
+    })();
+  }, [mode, params]);
+
+  async function savePassword(e: React.FormEvent) {
+    e.preventDefault();
+    const problem = passwordProblem(password);
+    if (problem) return setFormError(problem);
+    if (password !== confirm) return setFormError("The two passwords are not the same.");
+    setBusy(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ password });
+    setBusy(false);
     if (error) {
-      setError(friendly(null, error.message));
-      setState("error");
+      setFormError(/different|same/i.test(error.message) ? "Please choose a password you haven't used before." : error.message);
       return;
     }
-    router.replace(next);
-    router.refresh();
+    await supabase.auth.signOut();
+    setView("saved");
   }
 
-  if (state === "button") {
+  if (view === "reset") {
     return (
-      <div className="mail-sent">
-        <span className="kicker">Almost there</span>
-        <p className="serif text-[clamp(28px,3.4vw,40px)] leading-[1.08]">Tap the button to finish signing in.</p>
-        <div>
-          <button type="button" className="btn btn-primary" onClick={confirm}>
-            Sign in →
+      <form className="auth-form" onSubmit={savePassword}>
+        {formError && <FormMessage tone="error">{formError}</FormMessage>}
+        <PasswordField label="New password" required autoComplete="new-password" maxLength={72} showStrength value={password} onChange={(e) => setPassword(e.target.value)} hint="At least 8 characters, with letters and numbers." />
+        <PasswordField label="Type it again" required autoComplete="new-password" maxLength={72} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        <div className="auth-row">
+          <button type="submit" className="btn btn-primary auth-submit" disabled={busy}>
+            {busy ? "Saving…" : "Save new password"}
           </button>
         </div>
-      </div>
+      </form>
     );
   }
 
-  if (state === "error") {
+  if (view === "verified" || view === "saved") {
     return (
-      <div className="mail-sent" role="alert">
-        <span className="kicker">Sign-in link</span>
-        <p className="serif text-[clamp(28px,3.4vw,40px)] leading-[1.08]">{error}</p>
-        <div>
-          <Link href={`/signin?next=${encodeURIComponent(next)}`} className="btn btn-primary">
-            Send a new link
+      <div className="auth-sent" role="status">
+        <p className="serif auth-sent-title">
+          {view === "verified" ? "Your email is verified." : "Your new password is saved."}
+          <span>Sign in with your email and password.</span>
+        </p>
+        <div className="auth-row">
+          <Link href="/signin" className="btn btn-primary auth-submit">
+            Sign in
           </Link>
         </div>
       </div>
     );
   }
 
-  return <p className="label">Signing you in…</p>;
+  if (view === "error") {
+    return (
+      <div className="auth-sent" role="alert">
+        <p className="serif auth-sent-title">{error}</p>
+        <p className="auth-note">
+          {mode === "reset"
+            ? "Ask for a new link below."
+            : "If you already verified your email, you can simply sign in. Otherwise sign in and we'll offer to send a new link."}
+        </p>
+        <div className="auth-row">
+          <Link href={mode === "reset" ? "/forgot-password" : "/signin"} className="btn btn-primary auth-submit">
+            {mode === "reset" ? "Get a new link" : "Go to sign in"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return <p className="label">One moment…</p>;
 }

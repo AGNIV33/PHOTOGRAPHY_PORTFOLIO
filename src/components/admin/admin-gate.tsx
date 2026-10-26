@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/page-head";
-import { SignInForm } from "@/components/signin-form";
 import { SignOutButton } from "@/components/signout-button";
 import { adminState } from "@/lib/admin-guard";
 
@@ -12,15 +11,15 @@ export async function AdminGate({ children, next = "/admin" }: { children: React
     return (
       <EmptyState
         title="The dashboard is waiting for its keys."
-        body="Add the Supabase and Cloudinary keys to .env.local, run supabase/schema.sql once, then restart the site."
+        body="Add the Supabase and Cloudinary keys to .env, run supabase/schema.sql once, then restart the site."
       />
     );
   }
   if (state === "signed-out") {
     return (
-      <div className="grid gap-6">
-        <p className="serif text-[28px] leading-tight max-w-xl">Sign in with your email to open the dashboard.</p>
-        <SignInForm next={next} />
+      <div className="grid gap-6 justify-items-start">
+        <p className="serif text-[28px] leading-tight max-w-xl">Please sign in to open the dashboard.</p>
+        <Link href={`/signin?next=${encodeURIComponent(next)}`} className="btn btn-primary">Sign in</Link>
       </div>
     );
   }

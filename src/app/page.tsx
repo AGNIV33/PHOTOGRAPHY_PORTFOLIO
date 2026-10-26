@@ -108,11 +108,10 @@ export default function Home() {
           </h2>
           <div className="md:col-span-5 grid gap-5">
             <p className="text-[var(--ink-2)]">
-              Sign in with Google or an email link to see every photograph, and to like and
-              comment. No password needed.
+              Create a free account to see every photograph, and to like and comment.
             </p>
-            <Link href="/signin" className="explore">
-              Sign in
+            <Link href="/signup" className="explore">
+              Create account
               <span className="circle" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                   <path d="M2 9h13M10 4l5 5-5 5" stroke="currentColor" strokeWidth="1.3" />

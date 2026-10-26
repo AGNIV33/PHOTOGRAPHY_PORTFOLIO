@@ -1,5 +1,5 @@
 import "server-only";
-import { getUser, isAdminEmail } from "@/lib/auth";
+import { getUser, isAdmin } from "@/lib/auth";
 import { isBackendReady } from "@/lib/env";
 
 export type AdminState = "not-configured" | "signed-out" | "not-admin" | "ok";
@@ -9,6 +9,6 @@ export async function adminState(): Promise<{ state: AdminState; email?: string 
   if (!isBackendReady) return { state: "not-configured" };
   const user = await getUser();
   if (!user) return { state: "signed-out" };
-  if (!isAdminEmail(user.email)) return { state: "not-admin", email: user.email };
+  if (!isAdmin(user)) return { state: "not-admin", email: user.email };
   return { state: "ok", email: user.email };
 }

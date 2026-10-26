@@ -1,36 +1,35 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
-import { EmptyState, PageHead } from "@/components/page-head";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { EmptyState } from "@/components/page-head";
 import { SignInForm } from "@/components/signin-form";
 import { SignOutButton } from "@/components/signout-button";
-import { getUser, isAdminEmail } from "@/lib/auth";
+import { getUser, isAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
-import Link from "next/link";
 
 export const metadata: Metadata = { title: "Sign in" };
 
 async function SignInBody({ searchParams }: { searchParams: PageProps<"/signin">["searchParams"] }) {
   const params = await searchParams;
-  const next = typeof params.next === "string" ? params.next : "/gallery";
-  const linkError = params.error === "link";
+  const next = typeof params.next === "string" ? params.next : "/";
 
   if (!isSupabaseConfigured) {
-    return (
-      <EmptyState
-        title="Sign-in is not switched on yet."
-        body="It starts working once the Supabase keys are added."
-      />
-    );
+    return <EmptyState title="Sign-in is not switched on yet." body="It starts working once the Supabase keys are added." />;
   }
 
   const user = await getUser();
   if (user) {
+    const admin = isAdmin(user);
     return (
-      <div className="grid gap-5 max-w-md">
-        <p className="serif text-[28px] leading-tight">You are signed in as {user.email}.</p>
-        <div className="flex flex-wrap gap-3">
-          <Link href={isAdminEmail(user.email) ? "/admin" : "/gallery"} className="btn btn-primary">
-            {isAdminEmail(user.email) ? "Open dashboard" : "See all photos"}
+      <div className="auth-sent">
+        <p className="serif auth-sent-title">
+          You are signed in.
+          <span>{user.email}</span>
+        </p>
+        <div className="auth-row">
+          <Link href={admin ? "/admin" : "/gallery"} className="btn btn-primary auth-submit">
+            {admin ? "Open dashboard" : "See all photos"}
           </Link>
           <SignOutButton />
         </div>
@@ -38,29 +37,20 @@ async function SignInBody({ searchParams }: { searchParams: PageProps<"/signin">
     );
   }
 
-  return (
-    <div className="grid gap-6">
-      {linkError && (
-        <p className="text-[var(--safelight)]" role="alert">
-          That sign-in link has expired or was already used. Please ask for a new one.
-        </p>
-      )}
-      <SignInForm next={next} />
-    </div>
-  );
+  return <SignInForm next={next} />;
 }
 
 export default function SignInPage(props: PageProps<"/signin">) {
   return (
-    <div className="wrap">
-      <PageHead
-        index="—"
-        title="Sign in"
-        intro="Members can see every photograph and leave likes and comments."
-      />
+    <AuthShell
+      kicker="Members"
+      title="Sign in"
+      intro="Welcome back. Sign in to see every photograph, and to like and comment."
+      switchTo={{ text: "New here?", href: "/signup", label: "Create an account" }}
+    >
       <Suspense fallback={<p className="label">Loading…</p>}>
         <SignInBody searchParams={props.searchParams} />
       </Suspense>
-    </div>
+    </AuthShell>
   );
 }
