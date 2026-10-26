@@ -1401,3 +1401,37 @@ select.field {
     grid-column: 2;
   }
 }
+
+/* ---------- Sign-in: "check your email" ---------- */
+
+.mail-sent {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 560px;
+  padding: var(--space-5);
+  border: 1px solid var(--hairline);
+  border-top: 2px solid var(--safelight);
+  background: color-mix(in oklab, var(--paper-2) 60%, transparent);
+}
+
+.mail-sent-icon {
+  color: var(--safelight);
+}
+
+.mail-steps {
+  display: grid;
+  border-top: 1px solid var(--hairline);
+}
+
+.mail-steps li {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: baseline;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.mail-steps strong {
+  font-weight: 600;
+  color: var(--ink);
+}

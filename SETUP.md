@@ -7,7 +7,10 @@
 3. **Authentication → URL Configuration**
    - Site URL: `http://localhost:3000` (change to the live Vercel address later)
    - Redirect URLs: add `http://localhost:3000/**` (and later `https://<your-site>.vercel.app/**`)
-4. **Project Settings → API Keys**: copy Project URL, Publishable key, Secret key.
+4. **Authentication → Email Templates** (optional, makes the sign-in email match the site):
+   open **Magic Link** and **Confirm signup**, set the subject written at the top of
+   `supabase/email-templates/magic-link.html` / `confirm-signup.html`, paste the file into the message body, Save.
+5. **Project Settings → API Keys**: copy Project URL, Publishable key, Secret key.
 
 ## 2. Cloudinary (photos)
 Dashboard → copy Cloud name, API Key, API Secret.

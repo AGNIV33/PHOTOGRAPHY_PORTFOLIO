@@ -1,0 +1,52 @@
+<!-- Supabase → Authentication → Email Templates → "Confirm signup".
+     Subject: Welcome. Confirm your email
+     Paste everything below into "Message body" (Source / HTML). -->
+<div style="margin:0;padding:0;background:#0d0d0c;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0c;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#181816;border:1px solid #2a2926;border-top:2px solid #b9895c;">
+          <tr>
+            <td style="padding:36px 36px 0 36px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0;font-size:13px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;color:#efece6;">
+                Suvrajit Sarkar <span style="color:#6f6b64;font-weight:normal;">|&nbsp; Photography</span>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 36px 0 36px;font-family:Georgia,'Times New Roman',serif;">
+              <p style="margin:0 0 14px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#b9895c;">
+                Welcome
+              </p>
+              <h1 style="margin:0;font-size:30px;line-height:1.15;font-weight:normal;color:#efece6;">
+                One tap to join
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 36px 0 36px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#b4b0a8;">
+              Thank you for joining. Tap the button below to confirm your email. You can then see every photograph, and like and comment on them.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 36px 0 36px;">
+              <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;background:#b9895c;color:#0d0d0c;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;letter-spacing:1px;text-decoration:none;">
+                Sign in &rarr;
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 36px 36px 36px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#8a867e;">
+              This link works once and expires after an hour. If you didn't ask for it, you can ignore this email.
+              <br /><br />
+              Sent to {{ .Email }}
+            </td>
+          </tr>
+        </table>
+        <p style="margin:20px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6f6b64;">
+          All photographs &copy; Suvrajit Sarkar
+        </p>
+      </td>
+    </tr>
+  </table>
+</div>
