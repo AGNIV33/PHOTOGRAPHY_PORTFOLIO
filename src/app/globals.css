@@ -2483,7 +2483,7 @@ select.field {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: min(34vw, 600px);
+    width: min(40vw, 720px);
     opacity: 0;
     will-change: transform;
     /* If scripts never run, show the photographs anyway after a moment. */
@@ -2563,7 +2563,7 @@ select.field {
   }
 
   .gs-item {
-    width: min(60vw, 300px);
+    width: min(68vw, 380px);
   }
 
   .gs-info {

@@ -12,9 +12,10 @@ import { ProtectedImage } from "./protected-image";
 // right, with an even gap between them. Scrolling slides the row down and to the left one
 // photograph at a time, each turning a little as it moves, and the panel on the left shows the
 // one in focus. At the end the row simply runs out.
-// On phones it is the same animation, tuned for a tall narrow screen: smaller photographs on a
-// steeper line, with a compact panel at the top. For people who turned animations off it is a
-// row to swipe instead; that switch is done in CSS, so the same images are used for both.
+// Motion is smoothed twice: Lenis smooths the page scroll, and the row then glides towards the
+// scroll position a few percent per frame, so it never jumps. The hover lift glides too.
+// On phones it is the same animation, tuned for a tall narrow screen. For people who turned
+// animations off it is a row to swipe instead; that switch is done in CSS.
 
 const TILT_X = [22, 18, 26, 20, 24, 16, 23]; // how far each photograph leans back (degrees)
 const TILT_Y = [-16, -10, -20, -12, -18, -8, -14]; // and turns towards the viewer
@@ -24,9 +25,11 @@ const ANGLE = (20 * Math.PI) / 180; // slope of the line
 const GAP = 0.26; // clear space between neighbours, as a share of their width
 const HOLD = 0.18; // share of each step where the row rests on a photograph
 const HOVER_DELAY = 1500; // the pointer must rest on a photograph this long (ms) before it comes forward
+const GLIDE = 0.09; // share of the remaining distance covered each frame (smaller = smoother, more lag)
 // Spacing along the line so that, at every resting point, neighbours are exactly one gap apart
 // whatever their size: centre distance = (half width + half width) x (1 + gap).
-const spacingFor = (grow: number, gap: number) => (grow * (1 + Math.exp(grow)) * (1 + gap)) / (2 * (Math.exp(grow) - 1))
+const spacingFor = (grow: number, gap: number) =>
+  (grow * (1 + Math.exp(grow)) * (1 + gap)) / (2 * (Math.exp(grow) - 1));
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -42,7 +45,7 @@ function settingsOf(p: PhotoView) {
   return [p.focal_length, p.aperture, p.shutter, p.iso && `ISO ${p.iso.replace(/^ISO\s*/i, "")}`].filter(Boolean).join(" · ") || "—";
 }
 
-export function GalleryScroller({ photos, palettes = [] }: { photos: PhotoView[]; palettes?: Palette[] }) {
+export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; palettes: Palette[] }) {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -56,7 +59,6 @@ export function GalleryScroller({ photos, palettes = [] }: { photos: PhotoView[]
   const openRef = useRef<HTMLAnchorElement>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
   const shown = useRef(-1);
-  const hovered = useRef(-1);
   const total = photos.length;
 
   useEffect(() => {
@@ -65,6 +67,13 @@ export function GalleryScroller({ photos, palettes = [] }: { photos: PhotoView[]
     if (!sec || !st) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const narrow = window.matchMedia("(max-width: 767px)");
+
+    let target = 0; // where the scroll says the row should be (0 to 1)
+    let current = -1; // where the row is drawn now, catching up with the target
+    let frame = 0;
+    let hovered = -1; // the photograph the pointer has rested on
+    const lift = photos.map(() => 0); // 0 = tilted in the row, 1 = straight and in front
+    let hoverTimer: number | undefined;
 
     const setFocus = (i: number) => {
       if (i === shown.current) return;
@@ -92,32 +101,30 @@ export function GalleryScroller({ photos, palettes = [] }: { photos: PhotoView[]
       }
     };
 
-    const update = () => {
+    // Draws the whole row for a scroll position p (0 to 1), with each photograph's hover lift.
+    const draw = (p: number) => {
       if (reduced.matches) {
         itemRefs.current.forEach((el) => el && (el.style.transform = ""));
         return;
       }
       const mobile = narrow.matches;
-      const rect = sec.getBoundingClientRect();
-      const scrollable = Math.max(1, rect.height - window.innerHeight);
-      const p = Math.min(1, Math.max(0, -rect.top / scrollable));
-      // Scroll position in photographs, resting briefly on each one.
-      const q = p * (total - 1);
-      const k = Math.floor(q);
-      const shift = Math.min(total - 1, k + easeInOut(Math.min(1, Math.max(0, (q - k - HOLD / 2) / (1 - HOLD)))));
-
-      const W = st.clientWidth;
-      const H = st.clientHeight;
-      // Laptop: wide photographs on a gentle slope. Phone: smaller ones on a steeper line,
-      // with the photograph in focus in the lower middle, under the panel.
       const grow = mobile ? Math.log(1.16) : GROW;
       const gap = mobile ? 0.2 : GAP;
       const slope = mobile ? Math.tan((38 * Math.PI) / 180) : Math.tan(ANGLE);
       const spacing = spacingFor(grow, gap);
-      const D = mobile ? Math.min(W * 0.6, H * 0.3, 320) : Math.min(W * 0.34, 600); // width in focus
-      const fx = mobile ? 0 : W * 0.14; // where the photograph in focus sits, from the centre
-      const fy = mobile ? H * 0.14 : -H * 0.06;
+      // Each photograph's width comes from the CSS, so the spacing follows it exactly.
+      const D = itemRefs.current[0]?.offsetWidth || 320;
+      const W = st.clientWidth;
+      const H = st.clientHeight;
+      // Laptop: the focus point sits right of centre. Phone: lower middle, under the panel.
+      const fx = mobile ? 0 : W * 0.14;
+      const fy = mobile ? H * 0.14 : -H * 0.14;
       const lean = mobile ? 0.6 : 1; // 3D tilt is gentler on a phone
+
+      // Scroll position in photographs, resting briefly on each one.
+      const q = p * (total - 1);
+      const k = Math.floor(q);
+      const shift = Math.min(total - 1, k + easeInOut(Math.min(1, Math.max(0, (q - k - HOLD / 2) / (1 - HOLD)))));
 
       let nearest = 0;
       let best = Infinity;
@@ -129,17 +136,15 @@ export function GalleryScroller({ photos, palettes = [] }: { photos: PhotoView[]
         const along = ((D * spacing) / grow) * (Math.exp(grow * t) - 1);
         const x = fx + along;
         const y = fy - along * slope;
-        // Each one turns a little as it travels.
-        const rz = (TILT_Z[i % TILT_Z.length] + t * 4) * lean;
-        const ry = (TILT_Y[i % TILT_Y.length] + t * 3) * lean;
-        const rx = TILT_X[i % TILT_X.length] * lean;
-        // Under the pointer: the photograph straightens, grows a little and comes to the front.
-        const lifted = hovered.current === i;
-        el.style.transform = lifted
-          ? `translate3d(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px), 0) scale(${(size * 1.08).toFixed(4)})`
-          : `translate3d(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px), 0) rotateX(${rx}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${size.toFixed(4)})`;
-        // Bigger photographs (further up the line) sit in front.
-        el.style.zIndex = lifted ? "190" : String(50 + Math.round(t * 10));
+        // Each one turns a little as it travels; a lifted photograph straightens to face you.
+        const l = lift[i];
+        const rz = (TILT_Z[i % TILT_Z.length] + t * 4) * lean * (1 - l);
+        const ry = (TILT_Y[i % TILT_Y.length] + t * 3) * lean * (1 - l);
+        const rx = TILT_X[i % TILT_X.length] * lean * (1 - l);
+        const s = size * (1 + 0.08 * l);
+        el.style.transform = `translate3d(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px), 0) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${s.toFixed(4)})`;
+        // Bigger photographs (further up the line) sit in front; a lifted one comes to the very front.
+        el.style.zIndex = String(l > 0.5 ? 190 : 50 + Math.round(t * 10));
         el.style.opacity = size < 0.3 ? "0" : "1";
         if (Math.abs(t) < best) {
           best = Math.abs(t);
@@ -149,58 +154,79 @@ export function GalleryScroller({ photos, palettes = [] }: { photos: PhotoView[]
       setFocus(nearest);
     };
 
+    // Glides the row and the hover lifts towards their targets, a few percent per frame.
+    const glide = () => {
+      current += (target - current) * GLIDE;
+      if (Math.abs(target - current) < 0.0005) current = target;
+      let moving = current !== target;
+      for (let i = 0; i < lift.length; i++) {
+        const goal = i === hovered ? 1 : 0;
+        lift[i] += (goal - lift[i]) * GLIDE * 1.4;
+        if (Math.abs(goal - lift[i]) < 0.002) lift[i] = goal;
+        else moving = true;
+      }
+      draw(current);
+      frame = moving ? requestAnimationFrame(glide) : 0;
+    };
+    const kick = () => {
+      if (!frame) frame = requestAnimationFrame(glide);
+    };
+
+    // Reads the scroll position of the section and starts the glide towards it.
+    const measure = () => {
+      const rect = sec.getBoundingClientRect();
+      const scrollable = Math.max(1, rect.height - window.innerHeight);
+      target = Math.min(1, Math.max(0, -rect.top / scrollable));
+      if (current < 0) current = target; // first time: start where we are, no glide from nothing
+      kick();
+    };
+
     // A small "View" label follows the pointer over a photograph.
     const onMove = (e: PointerEvent) => {
       const c = cursorRef.current;
       if (!c) return;
-      const overDisc = (e.target as Element | null)?.closest?.(".gs-item");
+      const overPhoto = (e.target as Element | null)?.closest?.(".gs-item");
       c.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
-      c.toggleAttribute("data-on", Boolean(overDisc));
+      c.toggleAttribute("data-on", Boolean(overPhoto));
     };
     const onLeave = () => cursorRef.current?.removeAttribute("data-on");
 
-    // Hover in or out: ease into the new pose, then follow the scroll directly again.
-    const ease = (el: HTMLElement) => {
-      el.style.transition = "transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1)";
-      window.setTimeout(() => (el.style.transition = ""), 440);
-    };
+    // Only a mouse resting on a photograph for a while brings it forward; touch never does.
     const els = [...itemRefs.current];
-    // Only a mouse resting on a photograph for a few seconds brings it forward.
-    let hoverTimer: number | undefined;
-    const enters = els.map((el, i) => (e: PointerEvent) => {
-      if (!el || e.pointerType !== "mouse") return;
+    const enters = els.map((_, i) => (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
       window.clearTimeout(hoverTimer);
       hoverTimer = window.setTimeout(() => {
-        hovered.current = i;
-        ease(el);
-        update();
+        hovered = i;
+        kick();
       }, HOVER_DELAY);
     });
-    const leaves = els.map((el, i) => () => {
+    const leaves = els.map((_, i) => () => {
       window.clearTimeout(hoverTimer);
-      if (!el || hovered.current !== i) return;
-      hovered.current = -1;
-      ease(el);
-      update();
+      if (hovered === i) {
+        hovered = -1;
+        kick();
+      }
     });
     els.forEach((el, i) => {
       el?.addEventListener("pointerenter", enters[i]);
       el?.addEventListener("pointerleave", leaves[i]);
     });
 
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    reduced.addEventListener("change", update);
-    narrow.addEventListener("change", update);
+    measure();
+    window.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    reduced.addEventListener("change", measure);
+    narrow.addEventListener("change", measure);
     st.addEventListener("pointermove", onMove);
     st.addEventListener("pointerleave", onLeave);
     return () => {
       window.clearTimeout(hoverTimer);
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-      reduced.removeEventListener("change", update);
-      narrow.removeEventListener("change", update);
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+      reduced.removeEventListener("change", measure);
+      narrow.removeEventListener("change", measure);
       st.removeEventListener("pointermove", onMove);
       st.removeEventListener("pointerleave", onLeave);
       els.forEach((el, i) => {
@@ -245,7 +271,7 @@ export function GalleryScroller({ photos, palettes = [] }: { photos: PhotoView[]
         <div
           ref={panelRef}
           className="gs-info"
-          style={{ "--gs-accent": palettes?.[0]?.accent, "--gs-tint": palettes?.[0]?.tint } as React.CSSProperties}
+          style={{ "--gs-accent": palettes[0]?.accent, "--gs-tint": palettes[0]?.tint } as React.CSSProperties}
         >
           <span className="gs-kicker">
             <span ref={countRef} className="frame-no">
