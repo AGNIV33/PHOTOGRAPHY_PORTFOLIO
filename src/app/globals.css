@@ -2564,3 +2564,105 @@ select.field {
     display: block;
   }
 }
+
+/* ---------- Contact ---------- */
+
+.contact {
+  display: grid;
+  gap: var(--space-6);
+  padding-block: var(--space-6) var(--space-5);
+}
+
+@media (min-width: 900px) {
+  .contact {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: var(--space-7);
+    align-items: start;
+  }
+
+  .contact-side {
+    position: sticky;
+    top: 112px;
+  }
+}
+
+.contact-head {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.contact-head h1 {
+  font-size: clamp(56px, 8vw, 120px);
+}
+
+.contact-head p {
+  max-width: 24ch;
+  font-size: clamp(24px, 2.4vw, 32px);
+  line-height: 1.2;
+  color: var(--ink-2);
+}
+
+.contact-facts {
+  display: grid;
+  margin-top: var(--space-5);
+  border-top: 1px solid var(--hairline);
+}
+
+.contact-facts > div {
+  display: grid;
+  gap: 8px;
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.contact-main {
+  max-width: 640px;
+}
+
+.contact-card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--hairline);
+  border-top: 2px solid var(--safelight);
+  background: color-mix(in oklab, var(--paper-2) 60%, transparent);
+}
+
+.contact-card-title {
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.1;
+}
+
+.auth-textarea {
+  min-height: 170px;
+  padding: 12px 14px;
+  line-height: 1.55;
+  resize: vertical;
+  background: color-mix(in oklab, var(--paper-2) 70%, transparent);
+  border: 1px solid var(--hairline);
+  transition: border-color 200ms var(--ease);
+}
+
+.auth-textarea:focus {
+  border-color: var(--safelight);
+}
+
+.auth-field[data-invalid] .auth-textarea {
+  border-color: #e0584c;
+}
+
+/* Out of sight and out of reach: only robots fill this in. */
+.contact-trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+

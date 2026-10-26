@@ -32,3 +32,13 @@ Restart the site (`Ctrl+C`, then `npm run dev`).
 
 ## 4. Live site (Vercel)
 Project → Settings → Environment Variables → add the same 7 values → Redeploy.
+
+## 5. Contact form (EmailJS)
+1. emailjs.com -> **Email Services** -> add your Gmail -> copy the **Service ID**.
+2. **Email Templates** -> new template. *To Email* = the address that should receive messages,
+   *Reply To* = `{{email}}`, *Subject* = `New message from {{name}}: {{subject}}`,
+   body uses `{{name}}`, `{{email}}`, `{{subject}}`, `{{message}}`, `{{time}}`. Copy the **Template ID**.
+3. **Account** -> **General** -> copy the **Public Key**.
+4. Put the three values in `.env` (`NEXT_PUBLIC_EMAILJS_SERVICE_ID`, `..._TEMPLATE_ID`, `..._PUBLIC_KEY`)
+   and in Vercel -> Settings -> Environment Variables, then redeploy.
+

@@ -31,6 +31,27 @@ export function Field({
   );
 }
 
+export function TextAreaField({
+  label,
+  error,
+  hint,
+  className,
+  ...area
+}: Common & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const id = useId();
+  return (
+    <div className={`auth-field ${className ?? ""}`} data-invalid={error ? "" : undefined}>
+      <label htmlFor={id} className="label">{label}</label>
+      <textarea id={id} className="auth-input auth-textarea" aria-invalid={error ? true : undefined} aria-describedby={error || hint ? `${id}-note` : undefined} {...area} />
+      {(error || hint) && (
+        <p id={`${id}-note`} className="auth-note" role={error ? "alert" : undefined}>
+          {error || hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function SelectField({
   label,
   error,

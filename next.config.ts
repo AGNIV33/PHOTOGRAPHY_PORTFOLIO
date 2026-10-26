@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   poweredByHeader: false,
+  experimental: {
+    // Local development only. Turbopack's on-disk copy of the compiled styles kept going stale on
+    // this computer (new CSS missing until the .next folder was deleted). Without it, every
+    // `npm run dev` compiles fresh. It does not affect the live site.
+    turbopackFileSystemCacheForDev: false,
+  },
   // Basic protection on every page: no framing by other sites (clickjacking), no MIME
   // sniffing, no full addresses leaked to other sites, and no camera/mic/location access.
   async headers() {
