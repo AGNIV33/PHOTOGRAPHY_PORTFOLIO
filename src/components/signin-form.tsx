@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { pageAfterSignIn, resendVerification } from "@/app/auth/actions";
 import { Field, FormMessage, PasswordField } from "@/components/auth/fields";
+import { markWelcomeNext } from "@/components/iris-loader";
 import { createClient } from "@/lib/supabase/browser";
 
 // The one sign-in for everyone. The two admin emails land on the dashboard,
@@ -37,7 +38,9 @@ export function SignInForm({ next = "/" }: { next?: string }) {
       }
       return;
     }
-    router.replace(await pageAfterSignIn(next));
+    const to = await pageAfterSignIn(next);
+    markWelcomeNext(); // everyone gets the full welcome right after signing in
+    router.replace(to);
     router.refresh();
   }
 

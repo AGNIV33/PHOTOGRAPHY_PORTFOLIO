@@ -42,6 +42,7 @@ export function SiteHeaderView({ pathname }: { pathname: string | null }) {
                 {item.label}
               </Link>
             ))}
+            <AdminNavLink pathname={pathname} />
           </nav>
           <AccountMenu />
           <button
@@ -91,7 +92,7 @@ function MobileAccountLinks({ close }: { close: () => void }) {
   const names = accountNames(user);
   return (
     <>
-      {names.admin && <Link href="/admin" onClick={close}>Dashboard</Link>}
+      {names.admin && <Link href="/admin" onClick={close}>Admin</Link>}
       <button
         type="button"
         className="mobile-logout"
@@ -104,5 +105,17 @@ function MobileAccountLinks({ close }: { close: () => void }) {
         <span className="label">{names.first}</span>
       </button>
     </>
+  );
+}
+
+// Only the two admin accounts see this. It is just a shortcut: the dashboard pages
+// check the admin again on the server, so the link alone gives nobody any access.
+function AdminNavLink({ pathname }: { pathname: string | null }) {
+  const { user } = useSignedInUser();
+  if (!user || !accountNames(user).admin) return null;
+  return (
+    <Link href="/admin" data-admin="" aria-current={pathname?.startsWith("/admin") ? "page" : undefined}>
+      Admin
+    </Link>
   );
 }
