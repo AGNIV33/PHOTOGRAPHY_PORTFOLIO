@@ -2344,6 +2344,11 @@ select.field {
 .gs-item .protected {
   background: var(--paper-2);
   box-shadow: 0 28px 60px rgb(0 0 0 / 0.55);
+  transition: box-shadow 420ms var(--ease);
+}
+
+.gs-item:hover .protected {
+  box-shadow: 0 40px 90px rgb(0 0 0 / 0.7);
 }
 
 .gs-cap {
@@ -2386,31 +2391,6 @@ select.field {
   font-size: 14px;
   text-align: right;
   color: var(--ink);
-}
-
-/* Hand-drawn ring around a photograph on hover. */
-.gs-scribble {
-  position: absolute;
-  inset: -12%;
-  width: 124%;
-  height: 124%;
-  pointer-events: none;
-  overflow: visible;
-}
-
-.gs-scribble path {
-  fill: none;
-  stroke: var(--safelight);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-dasharray: 760;
-  stroke-dashoffset: 760;
-  transition: stroke-dashoffset 700ms var(--ease);
-}
-
-.gs-item:hover .gs-scribble path,
-.gs-item:focus-visible .gs-scribble path {
-  stroke-dashoffset: 0;
 }
 
 /* The small "View" label that follows the pointer over a photograph. */
@@ -2545,8 +2525,7 @@ select.field {
   }
 
   .gs-info,
-  .gs-cursor,
-  .gs-scribble {
+  .gs-cursor {
     display: none;
   }
 

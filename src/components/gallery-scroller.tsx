@@ -53,6 +53,7 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
   const openRef = useRef<HTMLAnchorElement>(null);
   const cursorRef = useRef<HTMLSpanElement>(null);
   const shown = useRef(-1);
+  const hovered = useRef(-1);
   const total = photos.length;
 
   useEffect(() => {
@@ -115,9 +116,13 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
         const rz = TILT_Z[i % TILT_Z.length] + t * 4;
         const ry = TILT_Y[i % TILT_Y.length] + t * 3;
         const rx = TILT_X[i % TILT_X.length];
-        el.style.transform = `translate3d(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px), 0) rotateX(${rx}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${size.toFixed(4)})`;
+        // Under the pointer: the photograph straightens, grows a little and comes to the front.
+        const lifted = hovered.current === i;
+        el.style.transform = lifted
+          ? `translate3d(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px), 0) scale(${(size * 1.08).toFixed(4)})`
+          : `translate3d(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px), 0) rotateX(${rx}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) scale(${size.toFixed(4)})`;
         // Bigger photographs (further up the line) sit in front.
-        el.style.zIndex = String(50 + Math.round(t * 10));
+        el.style.zIndex = lifted ? "190" : String(50 + Math.round(t * 10));
         el.style.opacity = size < 0.3 ? "0" : "1";
         if (Math.abs(t) < best) {
           best = Math.abs(t);
@@ -137,6 +142,29 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
     };
     const onLeave = () => cursorRef.current?.removeAttribute("data-on");
 
+    // Hover in or out: ease into the new pose, then follow the scroll directly again.
+    const ease = (el: HTMLElement) => {
+      el.style.transition = "transform 420ms cubic-bezier(0.2, 0.7, 0.2, 1)";
+      window.setTimeout(() => (el.style.transition = ""), 440);
+    };
+    const els = [...itemRefs.current];
+    const enters = els.map((el, i) => () => {
+      if (!el) return;
+      hovered.current = i;
+      ease(el);
+      update();
+    });
+    const leaves = els.map((el, i) => () => {
+      if (!el || hovered.current !== i) return;
+      hovered.current = -1;
+      ease(el);
+      update();
+    });
+    els.forEach((el, i) => {
+      el?.addEventListener("pointerenter", enters[i]);
+      el?.addEventListener("pointerleave", leaves[i]);
+    });
+
     update();
     window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", update);
@@ -151,6 +179,10 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
       narrow.removeEventListener("change", update);
       st.removeEventListener("pointermove", onMove);
       st.removeEventListener("pointerleave", onLeave);
+      els.forEach((el, i) => {
+        el?.removeEventListener("pointerenter", enters[i]);
+        el?.removeEventListener("pointerleave", leaves[i]);
+      });
     };
   }, [photos, total]);
 
@@ -178,10 +210,6 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
                 height={photo.height}
                 priority
               />
-              {/* A hand-drawn ring around the photograph on hover. */}
-              <svg className="gs-scribble" viewBox="0 0 200 200" aria-hidden="true">
-                <path d="M100 8c52 0 88 38 88 90 0 50-40 94-92 94C46 192 10 154 12 100 14 50 52 10 104 12c40 2 72 26 80 60" />
-              </svg>
               <span className="gs-cap">
                 <span>{photo.caption || "Untitled"}</span>
                 <span className="frame-no">{pad(i + 1)}</span>
