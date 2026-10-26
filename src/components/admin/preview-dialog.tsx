@@ -16,7 +16,9 @@ export type PreviewItem = {
 // "This is how it will look": the same grid visitors see on the Work page, with the pictures
 // that are about to be published. Nothing is saved until the confirm button is pressed.
 export function PreviewDialog({
-  items,
+  items = [],
+  children,
+  summary,
   title = "Preview",
   note,
   confirmLabel,
@@ -24,7 +26,10 @@ export function PreviewDialog({
   onClose,
   onConfirm,
 }: {
-  items: PreviewItem[];
+  items?: PreviewItem[];
+  // Anything else to preview (for example a story); shown instead of the photo grid.
+  children?: React.ReactNode;
+  summary?: string;
   title?: string;
   note?: string;
   confirmLabel: string;
@@ -68,7 +73,9 @@ export function PreviewDialog({
         </header>
 
         <div className="preview-body" data-lenis-prevent>
-          {items.length === 0 ? (
+          {children ? (
+            children
+          ) : items.length === 0 ? (
             <p className="text-[var(--ink-2)]">Nothing to preview yet.</p>
           ) : (
             <div className="justified">
@@ -97,14 +104,14 @@ export function PreviewDialog({
 
         <footer className="preview-foot">
           <span className="text-[var(--ink-2)]">
-            {items.length} photo{items.length === 1 ? "" : "s"}
-            {items.some((i) => i.members) ? " · members-only photos are blurred for people who are not signed in" : ""}
+            {summary ??
+              `${items.length} photo${items.length === 1 ? "" : "s"}${items.some((i) => i.members) ? " · members-only photos are blurred for people who are not signed in" : ""}`}
           </span>
           <div className="flex flex-wrap gap-3">
             <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
               Keep editing
             </button>
-            <button type="button" className="btn btn-primary" onClick={onConfirm} disabled={busy || items.length === 0}>
+            <button type="button" className="btn btn-primary" onClick={onConfirm} disabled={busy || (!children && items.length === 0)}>
               {busy ? "Working…" : confirmLabel}
             </button>
           </div>

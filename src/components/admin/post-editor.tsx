@@ -6,6 +6,7 @@ import { useRef, useState, useTransition } from "react";
 import { getUploadSignature } from "@/app/admin/actions";
 import { deletePost, discardCover, savePost, type PostInput } from "@/app/admin/content-actions";
 import { uploadToCloudinary } from "@/lib/upload-client";
+import { PreviewDialog } from "./preview-dialog";
 
 type Cover = NonNullable<PostInput["cover"]> & { preview: string };
 
@@ -20,6 +21,19 @@ export type EditablePost = {
   cover: Cover | null;
 };
 
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function formatDay(day: string) {
+  const [y, m, d] = day.split("-").map(Number);
+  return y && m && d ? `${d} ${MONTHS[m - 1]} ${y}` : day;
+}
+
+const paragraphs = (text: string) =>
+  text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
 export function PostEditor({ post, notice = "" }: { post: EditablePost; notice?: string }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -32,6 +46,7 @@ export function PostEditor({ post, notice = "" }: { post: EditablePost; notice?:
   const [msg, setMsg] = useState(notice);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
+  const [previewing, setPreviewing] = useState(false);
   // Covers uploaded in this visit; any that end up unused are deleted again.
   const uploaded = useRef<string[]>([]);
 
@@ -154,6 +169,9 @@ export function PostEditor({ post, notice = "" }: { post: EditablePost; notice?:
             View on website
           </Link>
         )}
+        <button type="button" className="btn btn-ghost" disabled={pending || progress !== null} onClick={() => setPreviewing(true)}>
+          Preview
+        </button>
         <button type="button" className="btn btn-ghost" disabled={pending || progress !== null} onClick={() => save("draft")}>
           Save as draft
         </button>
@@ -161,6 +179,46 @@ export function PostEditor({ post, notice = "" }: { post: EditablePost; notice?:
           {pending ? "Saving…" : "Publish"}
         </button>
       </div>
+
+      {previewing && (
+        <PreviewDialog
+          title="Preview before publishing"
+          note="This is how the story will look on the website."
+          summary="Nothing is saved or published until you press Publish."
+          confirmLabel="Publish"
+          busy={pending}
+          onClose={() => setPreviewing(false)}
+          onConfirm={() => {
+            setPreviewing(false);
+            save("published");
+          }}
+        >
+          <article className="post">
+            <header className="post-head">
+              <span className="label">← Journal</span>
+              <span className="frame-no">{formatDay(day)}</span>
+              <h1 className="serif">{title || "Untitled story"}</h1>
+              {excerpt && <p className="text-[var(--ink-2)] text-[19px] max-w-[56ch]">{excerpt}</p>}
+            </header>
+            {cover && (
+              <figure className="post-cover">
+                <span className="protected" style={{ aspectRatio: `${cover.width} / ${cover.height}` }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cover.preview} alt="" />
+                </span>
+              </figure>
+            )}
+            <div className="post-body">
+              {paragraphs(body).map((p, i) => (
+                <p key={i} className={i === 0 ? "post-lead serif" : undefined}>
+                  {p}
+                </p>
+              ))}
+              {paragraphs(body).length === 0 && <p className="text-[var(--ink-2)]">The story is empty so far.</p>}
+            </div>
+          </article>
+        </PreviewDialog>
+      )}
     </div>
   );
 }

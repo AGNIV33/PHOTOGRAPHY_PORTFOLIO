@@ -170,7 +170,7 @@ export async function suggestTags(id: string) {
   const photo = await adminGetPhoto(id);
   if (!photo) throw new Error("Photo not found.");
   const found = await analyzePhoto(photo.public_id);
-  return { tags: mergeTags(photo.tags ?? [], found), ai: found.aiUsed };
+  return { tags: mergeTags(photo.tags ?? [], found), ai: found.aiUsed, aiError: found.aiError };
 }
 
 // For "categorise everything": which photos still need categories.
@@ -195,7 +195,7 @@ export async function categorizePhoto(id: string) {
   const tags = mergeTags(photo.tags ?? [], found);
   const { error } = await createAdminClient().from("photos").update({ tags }).eq("id", id);
   if (error) throw new Error(error.message);
-  return { tags, ai: found.aiUsed };
+  return { tags, ai: found.aiUsed, aiError: found.aiError };
 }
 
 export type BulkPatch = {

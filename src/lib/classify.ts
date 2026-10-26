@@ -99,32 +99,25 @@ async function suggestStylesClaude(bytes: Buffer): Promise<string[]> {
 async function suggestStylesNvidia(bytes: Buffer): Promise<string[]> {
   let jpeg = await sharp(bytes).resize(640, 640, { fit: "inside" }).jpeg({ quality: 72 }).toBuffer();
   if (jpeg.length > 150_000) jpeg = await sharp(bytes).resize(512, 512, { fit: "inside" }).jpeg({ quality: 60 }).toBuffer();
-  const res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${nvidiaKey}`, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      model: nvidiaModel,
-      max_tokens: 60,
-      temperature: 0.1,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text:
-                "This is a photograph from a street and documentary photographer's portfolio. " +
-                `Choose the one to three categories that fit it best, only from this list: ${STYLE_TAGS.join(", ")}. ` +
-                "Street means everyday life in public places. Answer with the category names only, separated by commas.",
-            },
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${jpeg.toString("base64")}` } },
-          ],
-        },
-      ],
-    }),
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`NVIDIA answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const prompt =
+    "This is a photograph from a street and documentary photographer's portfolio. " +
+    `Choose the one to three categories that fit it best, only from this list: ${STYLE_TAGS.join(", ")}. ` +
+    "Street means everyday life in public places. Answer with the category names only, separated by commas.";
+  const dataUrl = `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+  const ask = (content: unknown) =>
+    fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${nvidiaKey}`, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ model: nvidiaModel, max_tokens: 60, temperature: 0.1, messages: [{ role: "user", content }] }),
+      cache: "no-store",
+    });
+  // The usual shape first; some NVIDIA models want the picture written into the text instead.
+  let res = await ask([
+    { type: "text", text: prompt },
+    { type: "image_url", image_url: { url: dataUrl } },
+  ]);
+  if (res.status === 400 || res.status === 422) res = await ask(`${prompt} <img src="${dataUrl}" />`);
+  if (!res.ok) throw new Error(`NVIDIA answered ${res.status}: ${(await res.text()).slice(0, 160)}`);
   const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   const answer = (json.choices?.[0]?.message?.content ?? "").toLowerCase();
   // Keep the allowed names that appear in the answer, in the order they were given.
@@ -143,7 +136,12 @@ export const aiAvailable = Boolean(nvidiaKey || anthropicKey);
 
 // The categories for one picture. Never throws: on any trouble it returns what it could work out.
 export async function analyzePhoto(publicId: string, opts: { styles?: boolean } = {}) {
-  const out: { colour: typeof BW | typeof COLOUR | null; styles: string[]; aiUsed: boolean } = { colour: null, styles: [], aiUsed: false };
+  const out: { colour: typeof BW | typeof COLOUR | null; styles: string[]; aiUsed: boolean; aiError: string } = {
+    colour: null,
+    styles: [],
+    aiUsed: false,
+    aiError: "",
+  };
   let bytes: Buffer;
   try {
     bytes = await loadBytes(publicId);
@@ -158,7 +156,8 @@ export async function analyzePhoto(publicId: string, opts: { styles?: boolean } 
       out.styles = await suggestStyles(bytes);
       out.aiUsed = true;
     } catch (e) {
-      console.warn("Photo categories: the AI step failed", e instanceof Error ? e.message : e);
+      out.aiError = (e instanceof Error ? e.message : String(e)).slice(0, 200);
+      console.warn("Photo categories: the AI step failed", out.aiError);
     }
   }
   return out;

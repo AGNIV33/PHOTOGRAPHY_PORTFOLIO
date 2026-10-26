@@ -41,15 +41,18 @@ export function CategoryManager({ categories, ai, total }: { categories: [string
         return;
       }
       let failed = 0;
+      let aiError = "";
       for (let i = 0; i < ids.length; i++) {
         setProgress(`Looking at photo ${i + 1} of ${ids.length}…`);
         try {
-          await categorizePhoto(ids[i]);
+          const r = await categorizePhoto(ids[i]);
+          if (r.aiError) aiError = r.aiError;
         } catch {
           failed++;
         }
       }
-      setMsg(failed ? `Done. ${ids.length - failed} photos categorised, ${failed} could not be read.` : `Done. ${ids.length} photo${ids.length === 1 ? "" : "s"} categorised.`);
+      const base = failed ? `Done. ${ids.length - failed} photos categorised, ${failed} could not be read.` : `Done. ${ids.length} photo${ids.length === 1 ? "" : "s"} categorised.`;
+      setMsg(aiError ? `${base} Black & white / colour worked, but the AI step failed: ${aiError}` : base);
       router.refresh();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Something went wrong.");

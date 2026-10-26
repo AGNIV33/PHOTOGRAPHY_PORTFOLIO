@@ -32,7 +32,9 @@ export function EditPhotoForm({ id, initial, albums: initialAlbums, knownTags }:
       setTagsNote(
         r.ai
           ? "Suggested by AI. Take off any that don't fit, then save."
-          : "Black & white / colour was checked. AI style suggestions need the Anthropic key to be set up.",
+          : r.aiError
+            ? `Black & white / colour was checked, but the AI step failed: ${r.aiError}`
+            : "Black & white / colour was checked. AI style suggestions need the AI key (NVIDIA_API_KEY) to be set up.",
       );
     } catch (e) {
       setTagsNote(e instanceof Error ? e.message : "Could not suggest categories.");
