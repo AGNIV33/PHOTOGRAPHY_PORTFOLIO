@@ -8,12 +8,15 @@ import { passwordProblem } from "@/lib/password";
 import { createClient } from "@/lib/supabase/browser";
 
 // Links in account emails land here.
-// - mode=verified: the sign-up email. Supabase has already marked the email as verified;
-//   we don't keep the session, the person signs in with their password.
+// - mode=verified: the sign-up email. Normally Supabase has already marked the email as
+//   verified before sending people here (the session is in the part of the address after "#").
+//   If the link instead carries a token_hash (an older email design), the person presses a
+//   button to verify it, so that email scanners can't use it up first. We never keep the
+//   session; the person signs in with their password.
 // - mode=reset: the forgot-password email. The link signs in just long enough to choose
 //   a new password, then signs out again.
 
-type View = "working" | "verified" | "reset" | "saved" | "error";
+type View = "working" | "confirm" | "verified" | "reset" | "saved" | "error";
 
 function friendly(code: string | null, description: string | null) {
   if (code === "otp_expired" || /expired|invalid/i.test(description ?? "")) {
@@ -65,10 +68,32 @@ export function FinishSignIn() {
         }
         return;
       }
-      // Sign-up verification (and any older link): the email is verified; sign in next.
-      setView("verified");
+      if (params.get("token_hash")) {
+        setView("confirm");
+        return;
+      }
+      // Sign-up verification: only claim success when Supabase really sent a session.
+      if (access_token && refresh_token) {
+        setView("verified");
+        return;
+      }
+      setError("We couldn't confirm your email from this link.");
+      setView("error");
     })();
   }, [mode, params]);
+
+  async function confirmEmail() {
+    setView("working");
+    const supabase = createClient();
+    const { error } = await supabase.auth.verifyOtp({ token_hash: params.get("token_hash")!, type: "signup" });
+    if (error) {
+      setError(friendly(null, error.message));
+      setView("error");
+      return;
+    }
+    await supabase.auth.signOut();
+    setView("verified");
+  }
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -102,6 +127,22 @@ export function FinishSignIn() {
     );
   }
 
+  if (view === "confirm") {
+    return (
+      <div className="auth-sent">
+        <p className="serif auth-sent-title">
+          One last tap.
+          <span>Press the button to confirm your email.</span>
+        </p>
+        <div className="auth-row">
+          <button type="button" className="btn btn-primary auth-submit" onClick={confirmEmail}>
+            Confirm my email
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (view === "verified" || view === "saved") {
     return (
       <div className="auth-sent" role="status">
@@ -125,7 +166,7 @@ export function FinishSignIn() {
         <p className="auth-note">
           {mode === "reset"
             ? "Ask for a new link below."
-            : "If you already verified your email, you can simply sign in. Otherwise sign in and we'll offer to send a new link."}
+            : "Sign in with your email and password. If it says your email isn't verified, we'll offer to send a new link."}
         </p>
         <div className="auth-row">
           <Link href={mode === "reset" ? "/forgot-password" : "/signin"} className="btn btn-primary auth-submit">
