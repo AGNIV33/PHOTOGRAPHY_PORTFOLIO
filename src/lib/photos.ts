@@ -1,6 +1,6 @@
 import "server-only";
 import type { User } from "@supabase/supabase-js";
-import { imageUrl } from "@/lib/cloudinary";
+import { imageUrl, swatchUrl } from "@/lib/cloudinary";
 import { isBackendReady } from "@/lib/env";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
@@ -40,6 +40,8 @@ export type PhotoView = Omit<PhotoRow, "public_id"> & {
   locked: boolean;
   // 720px, for the home page.
   card: string | null;
+  // Tiny copy for reading the photo's colours on the server.
+  swatch: string | null;
   thumb: string | null;
   large: string | null;
 };
@@ -67,6 +69,7 @@ export function toView(row: PhotoRow, user: User | null): PhotoView {
     ...rest,
     locked,
     card: locked ? null : imageUrl(public_id, "card"),
+    swatch: locked ? null : swatchUrl(public_id),
     thumb: locked ? null : imageUrl(public_id, "thumb"),
     large: locked ? null : imageUrl(public_id, "large"),
   };

@@ -7,6 +7,7 @@ import { ProtectedImage } from "@/components/protected-image";
 import { getUser } from "@/lib/auth";
 import { isBackendReady } from "@/lib/env";
 import { getHeroImages, HERO_SLOTS } from "@/lib/hero-images";
+import { getPalette } from "@/lib/palette";
 import { listAlbums, listPhotos } from "@/lib/photos";
 import { albumSlots, frames } from "@/lib/placeholders";
 
@@ -32,7 +33,8 @@ async function RecentFrames() {
   const photos = await listPhotos(user, { limit: 24 });
   const open = photos.filter((p) => !p.locked).slice(0, 7);
   if (open.length === 0) return placeholder;
-  return <GalleryScroller photos={open} />;
+  const palettes = await Promise.all(open.map((p) => getPalette(p.swatch)));
+  return <GalleryScroller photos={open} palettes={palettes} />;
 }
 
 async function AlbumRows() {

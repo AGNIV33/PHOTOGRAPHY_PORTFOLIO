@@ -66,6 +66,15 @@ export function imageUrl(publicId: string, size: Size) {
   });
 }
 
+// A 48px copy, used only on the server to read a photograph's colours. Never shown.
+export function swatchUrl(publicId: string) {
+  return cloudinary.url(publicId, {
+    type: DELIVERY_TYPE,
+    sign_url: true,
+    transformation: [{ width: 48, height: 48, crop: "limit" }, { fetch_format: "jpg", quality: 70 }],
+  });
+}
+
 export async function deleteImage(publicId: string) {
   await cloudinary.uploader.destroy(publicId, { type: DELIVERY_TYPE, invalidate: true });
 }

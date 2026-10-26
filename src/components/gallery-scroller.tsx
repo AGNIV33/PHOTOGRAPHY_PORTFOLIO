@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import type { Palette } from "@/lib/palette";
 import type { PhotoView } from "@/lib/photos";
 import { ProtectedImage } from "./protected-image";
 
@@ -39,7 +40,7 @@ function settingsOf(p: PhotoView) {
   return [p.focal_length, p.aperture, p.shutter, p.iso && `ISO ${p.iso.replace(/^ISO\s*/i, "")}`].filter(Boolean).join(" · ") || "—";
 }
 
-export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
+export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; palettes: Palette[] }) {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -74,6 +75,12 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
       if (cameraRef.current) cameraRef.current.textContent = ph.camera || "—";
       if (settingsRef.current) settingsRef.current.textContent = settingsOf(ph);
       if (openRef.current) openRef.current.href = `/photo/${ph.id}`;
+      // The caption takes on the colours of its photograph.
+      const pal = palettes[i];
+      if (pal && panelRef.current) {
+        panelRef.current.style.setProperty("--gs-accent", pal.accent);
+        panelRef.current.style.setProperty("--gs-tint", pal.tint);
+      }
       itemRefs.current.forEach((el, k) => el?.toggleAttribute("data-focus", k === i));
       const panel = panelRef.current;
       if (panel) {
@@ -184,7 +191,7 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
         el?.removeEventListener("pointerleave", leaves[i]);
       });
     };
-  }, [photos, total]);
+  }, [photos, palettes, total]);
 
   const first = photos[0];
 
@@ -218,7 +225,11 @@ export function GalleryScroller({ photos }: { photos: PhotoView[] }) {
           ))}
         </div>
 
-        <div ref={panelRef} className="gs-info">
+        <div
+          ref={panelRef}
+          className="gs-info"
+          style={{ "--gs-accent": palettes[0]?.accent, "--gs-tint": palettes[0]?.tint } as React.CSSProperties}
+        >
           <span className="gs-kicker">
             <span ref={countRef} className="frame-no">
               {pad(1)} / {pad(total)}

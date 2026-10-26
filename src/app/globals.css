@@ -2368,14 +2368,16 @@ select.field {
 
 .gs-title {
   font-size: clamp(34px, 3.8vw, 64px);
-  color: var(--ink);
+  color: var(--gs-accent, var(--ink));
+  transition: color 700ms var(--ease);
   text-wrap: balance;
 }
 
 /* Thin-ruled rows: label on the left, value on the right. */
 .gs-facts {
   display: grid;
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid color-mix(in oklab, var(--gs-accent, var(--hairline)) 35%, transparent);
+  transition: border-color 700ms var(--ease);
 }
 
 .gs-facts > div {
@@ -2384,13 +2386,31 @@ select.field {
   justify-content: space-between;
   gap: var(--space-3);
   padding-block: 7px;
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid color-mix(in oklab, var(--gs-accent, var(--hairline)) 22%, transparent);
+  transition: border-color 700ms var(--ease);
 }
 
 .gs-facts dd {
   font-size: 14px;
   text-align: right;
-  color: var(--ink);
+  color: var(--gs-tint, var(--ink));
+  transition: color 700ms var(--ease);
+}
+
+.gs-facts dt,
+.gs-kicker .label {
+  color: color-mix(in oklab, var(--gs-tint, var(--muted)) 62%, var(--muted));
+  transition: color 700ms var(--ease);
+}
+
+.gs-kicker .frame-no {
+  color: var(--gs-accent, var(--safelight));
+  transition: color 700ms var(--ease);
+}
+
+.gs-info .gs-open {
+  color: var(--gs-accent, var(--ink));
+  transition: color 700ms var(--ease);
 }
 
 /* The small "View" label that follows the pointer over a photograph. */
