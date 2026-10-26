@@ -23,7 +23,7 @@ const GROW = Math.log(1.24); // each photograph up the line is 24% bigger than t
 const ANGLE = (20 * Math.PI) / 180; // slope of the line
 const GAP = 0.26; // clear space between neighbours, as a share of their width
 const HOLD = 0.18; // share of each step where the row rests on a photograph
-const HOVER_DELAY = 3000; // the pointer must rest on a photograph this long (ms) before it comes forward
+const HOVER_DELAY = 1500; // the pointer must rest on a photograph this long (ms) before it comes forward
 // Spacing along the line so that, at every resting point, neighbours are exactly one gap apart
 // whatever their size: centre distance = (half width + half width) x (1 + gap).
 const spacingFor = (grow: number, gap: number) => (grow * (1 + Math.exp(grow)) * (1 + gap)) / (2 * (Math.exp(grow) - 1))
