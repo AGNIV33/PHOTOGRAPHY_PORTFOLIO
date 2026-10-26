@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { PageHead } from "@/components/page-head";
-import { site } from "@/config/site";
+import { getSettings, socialLinks } from "@/lib/content";
 
 export const metadata: Metadata = { title: "Contact" };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const settings = await getSettings();
+  const links = socialLinks(settings).filter((s) => s.href);
+
   return (
     <div className="wrap">
       <PageHead
@@ -15,22 +18,30 @@ export default function ContactPage() {
       <dl className="grid gap-8 md:grid-cols-3 max-w-4xl">
         <div className="grid gap-2">
           <dt className="label">Email</dt>
-          <dd className="text-muted">Email address needed</dd>
+          <dd>
+            {settings.email ? (
+              <a href={`mailto:${settings.email}`} className="arrow-link">{settings.email}</a>
+            ) : (
+              <span className="text-muted">Coming soon</span>
+            )}
+          </dd>
         </div>
-        {site.social.map((s) => (
+        {links.map((s) => (
           <div key={s.label} className="grid gap-2">
             <dt className="label">{s.label}</dt>
             <dd>
-              {s.href ? (
-                <a href={s.href} target="_blank" rel="noreferrer" className="arrow-link">
-                  Open profile
-                </a>
-              ) : (
-                <span className="text-muted">Link needed</span>
-              )}
+              <a href={s.href} target="_blank" rel="noreferrer" className="arrow-link">
+                Open profile
+              </a>
             </dd>
           </div>
         ))}
+        {settings.city && (
+          <div className="grid gap-2">
+            <dt className="label">Based in</dt>
+            <dd>{settings.city}</dd>
+          </div>
+        )}
       </dl>
     </div>
   );

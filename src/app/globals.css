@@ -1195,3 +1195,209 @@ select.field {
   height: 100%;
   object-fit: cover;
 }
+
+/* ---------- Journal ---------- */
+
+.post-list {
+  display: grid;
+  border-top: 1px solid var(--hairline);
+}
+
+.post-row {
+  display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-5);
+  border-bottom: 1px solid var(--hairline);
+}
+
+@media (min-width: 900px) {
+  .post-row[data-cover="yes"] {
+    grid-template-columns: minmax(280px, 5fr) 7fr;
+    gap: var(--space-5);
+    align-items: start;
+  }
+}
+
+.post-row-cover {
+  aspect-ratio: 3 / 2 !important;
+}
+
+.post-row-cover img {
+  transition: transform 600ms var(--ease);
+}
+
+.post-row:hover .post-row-cover img {
+  transform: scale(1.02);
+}
+
+.post-row-title {
+  font-size: clamp(30px, 3.6vw, 48px);
+  line-height: 1.04;
+  transition: color 160ms var(--ease);
+}
+
+.post-row:hover .post-row-title {
+  color: var(--safelight);
+}
+
+.post {
+  display: grid;
+  gap: var(--space-5);
+  padding-top: var(--space-6);
+}
+
+.post-head {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 900px;
+}
+
+.post-head h1 {
+  font-size: clamp(44px, 6.4vw, 92px);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+}
+
+.post-cover .protected {
+  max-height: calc(100svh - 120px);
+}
+
+.post-body {
+  display: grid;
+  gap: 1.2em;
+  max-width: 66ch;
+  font-size: 18px;
+  line-height: 1.7;
+  color: color-mix(in oklab, var(--ink) 88%, var(--ink-2));
+}
+
+.post-body p {
+  white-space: pre-line;
+}
+
+.post-lead {
+  font-size: clamp(24px, 2.4vw, 30px);
+  line-height: 1.32;
+  color: var(--ink);
+}
+
+.post-foot {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline);
+  max-width: 66ch;
+}
+
+/* ---------- About ---------- */
+
+.about {
+  display: grid;
+  gap: var(--space-5);
+}
+
+@media (min-width: 900px) {
+  .about {
+    grid-template-columns: 5fr 7fr;
+    gap: var(--space-6);
+    align-items: start;
+  }
+}
+
+.about-portrait {
+  background: var(--paper-2);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+
+.about-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1);
+  user-select: none;
+}
+
+@media (min-width: 900px) {
+  .about-portrait {
+    position: sticky;
+    top: 96px;
+  }
+}
+
+/* ---------- Achievements & gear lists ---------- */
+
+.ledger {
+  display: grid;
+  border-top: 1px solid var(--hairline);
+}
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: var(--space-2) var(--space-4);
+  padding-block: var(--space-4);
+  border-bottom: 1px solid var(--hairline);
+}
+
+@media (min-width: 768px) {
+  .ledger-row {
+    grid-template-columns: 120px 1fr auto;
+  }
+  .ledger-row-2 {
+    grid-template-columns: 120px 1fr;
+  }
+}
+
+.ledger-year {
+  padding-top: 0.7em;
+}
+
+.ledger-title {
+  font-size: clamp(24px, 2.6vw, 34px);
+  line-height: 1.1;
+}
+
+.ledger-link {
+  grid-column: 2;
+  align-self: start;
+  padding-top: 0.9em;
+}
+
+@media (min-width: 768px) {
+  .ledger-link {
+    grid-column: auto;
+  }
+}
+
+/* ---------- Dashboard: editors ---------- */
+
+.post-body-field {
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.post-cover-edit {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 420px;
+}
+
+.post-cover-edit img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: var(--paper-2);
+}
+
+.list-fields {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .list-fields {
+    grid-template-columns: 160px 1fr;
+  }
+  .list-fields-full {
+    grid-column: 2;
+  }
+}

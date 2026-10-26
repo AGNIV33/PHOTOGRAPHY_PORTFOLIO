@@ -3,6 +3,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { deleteImage, signUpload } from "@/lib/cloudinary";
 import { adminGetPhoto, type Visibility } from "@/lib/photos";
+import { slugify, uniqueSlug } from "@/lib/slug";
 import { createAdminClient } from "@/lib/supabase/server";
 
 export type PhotoInput = {
@@ -77,29 +78,16 @@ export async function deletePhoto(id: string) {
 
 // ---------- Albums ----------
 
-function slugify(title: string) {
-  return (
-    title
-      .toLowerCase()
-      .normalize("NFKD")
-      .replace(/[^\w\s-]/g, "")
-      .trim()
-      .replace(/[\s_-]+/g, "-")
-      .slice(0, 60) || "album"
-  );
-}
-
 export async function createAlbum(title: string, story: string) {
   await requireAdmin();
   const name = title.trim();
   if (!name) throw new Error("Please give the album a name.");
   const db = createAdminClient();
-  const base = slugify(name);
+  const base = slugify(name, "album");
   // Make the web address unique: kolkata-trams, kolkata-trams-2, ...
   const { data: taken } = await db.from("albums").select("slug").like("slug", `${base}%`);
   const used = new Set((taken ?? []).map((r) => r.slug));
-  let slug = base;
-  for (let i = 2; used.has(slug); i++) slug = `${base}-${i}`;
+  const slug = uniqueSlug(base, used);
   const { count } = await db.from("albums").select("*", { count: "exact", head: true });
   const { data, error } = await db
     .from("albums")

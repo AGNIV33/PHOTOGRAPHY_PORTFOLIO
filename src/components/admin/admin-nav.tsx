@@ -8,6 +8,10 @@ const items = [
   { href: "/admin/upload", label: "Add photo" },
   { href: "/admin/albums", label: "Albums" },
   { href: "/admin/comments", label: "Comments" },
+  { href: "/admin/journal", label: "Journal" },
+  { href: "/admin/achievements", label: "Achievements" },
+  { href: "/admin/gear", label: "Gear" },
+  { href: "/admin/about", label: "About & links" },
 ];
 
 export function AdminNav() {
