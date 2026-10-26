@@ -12,8 +12,9 @@ import { ProtectedImage } from "./protected-image";
 // right, with an even gap between them. Scrolling slides the row down and to the left one
 // photograph at a time, each turning a little as it moves, and the panel on the left shows the
 // one in focus. At the end the row simply runs out.
-// On phones (and for people who turned animations off) it is a row to swipe instead; the switch
-// is done in CSS, so the same images are used for both.
+// On phones it is the same animation, tuned for a tall narrow screen: smaller photographs on a
+// steeper line, with a compact panel at the top. For people who turned animations off it is a
+// row to swipe instead; that switch is done in CSS, so the same images are used for both.
 
 const TILT_X = [22, 18, 26, 20, 24, 16, 23]; // how far each photograph leans back (degrees)
 const TILT_Y = [-16, -10, -20, -12, -18, -8, -14]; // and turns towards the viewer
@@ -22,9 +23,10 @@ const GROW = Math.log(1.24); // each photograph up the line is 24% bigger than t
 const ANGLE = (20 * Math.PI) / 180; // slope of the line
 const GAP = 0.26; // clear space between neighbours, as a share of their width
 const HOLD = 0.18; // share of each step where the row rests on a photograph
+const HOVER_DELAY = 3000; // the pointer must rest on a photograph this long (ms) before it comes forward
 // Spacing along the line so that, at every resting point, neighbours are exactly one gap apart
 // whatever their size: centre distance = (half width + half width) x (1 + gap).
-const SPACING = (GROW * (1 + Math.exp(GROW)) * (1 + GAP)) / (2 * (Math.exp(GROW) - 1));
+const spacingFor = (grow: number, gap: number) => (grow * (1 + Math.exp(grow)) * (1 + gap)) / (2 * (Math.exp(grow) - 1))
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -40,7 +42,7 @@ function settingsOf(p: PhotoView) {
   return [p.focal_length, p.aperture, p.shutter, p.iso && `ISO ${p.iso.replace(/^ISO\s*/i, "")}`].filter(Boolean).join(" · ") || "—";
 }
 
-export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; palettes: Palette[] }) {
+export function GalleryScroller({ photos, palettes = [] }: { photos: PhotoView[]; palettes?: Palette[] }) {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -76,7 +78,7 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
       if (settingsRef.current) settingsRef.current.textContent = settingsOf(ph);
       if (openRef.current) openRef.current.href = `/photo/${ph.id}`;
       // The caption takes on the colours of its photograph.
-      const pal = palettes[i];
+      const pal = palettes?.[i];
       if (pal && panelRef.current) {
         panelRef.current.style.setProperty("--gs-accent", pal.accent);
         panelRef.current.style.setProperty("--gs-tint", pal.tint);
@@ -91,10 +93,11 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
     };
 
     const update = () => {
-      if (reduced.matches || narrow.matches) {
+      if (reduced.matches) {
         itemRefs.current.forEach((el) => el && (el.style.transform = ""));
         return;
       }
+      const mobile = narrow.matches;
       const rect = sec.getBoundingClientRect();
       const scrollable = Math.max(1, rect.height - window.innerHeight);
       const p = Math.min(1, Math.max(0, -rect.top / scrollable));
@@ -105,24 +108,31 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
 
       const W = st.clientWidth;
       const H = st.clientHeight;
-      const D = Math.min(W * 0.34, 600); // width of the photograph in focus
-      const fx = W * 0.14; // where the photograph in focus sits, from the centre
-      const fy = -H * 0.06;
+      // Laptop: wide photographs on a gentle slope. Phone: smaller ones on a steeper line,
+      // with the photograph in focus in the lower middle, under the panel.
+      const grow = mobile ? Math.log(1.16) : GROW;
+      const gap = mobile ? 0.2 : GAP;
+      const slope = mobile ? Math.tan((38 * Math.PI) / 180) : Math.tan(ANGLE);
+      const spacing = spacingFor(grow, gap);
+      const D = mobile ? Math.min(W * 0.6, H * 0.3, 320) : Math.min(W * 0.34, 600); // width in focus
+      const fx = mobile ? 0 : W * 0.14; // where the photograph in focus sits, from the centre
+      const fy = mobile ? H * 0.14 : -H * 0.06;
+      const lean = mobile ? 0.6 : 1; // 3D tilt is gentler on a phone
 
       let nearest = 0;
       let best = Infinity;
       itemRefs.current.forEach((el, i) => {
         if (!el) return;
         const t = i - shift; // 0 = in focus, positive = further up the line
-        const size = Math.exp(GROW * t);
-        // Horizontal distance from the focus point (see SPACING).
-        const along = ((D * SPACING) / GROW) * (Math.exp(GROW * t) - 1);
+        const size = Math.exp(grow * t);
+        // Horizontal distance from the focus point (see spacingFor).
+        const along = ((D * spacing) / grow) * (Math.exp(grow * t) - 1);
         const x = fx + along;
-        const y = fy - along * Math.tan(ANGLE);
+        const y = fy - along * slope;
         // Each one turns a little as it travels.
-        const rz = TILT_Z[i % TILT_Z.length] + t * 4;
-        const ry = TILT_Y[i % TILT_Y.length] + t * 3;
-        const rx = TILT_X[i % TILT_X.length];
+        const rz = (TILT_Z[i % TILT_Z.length] + t * 4) * lean;
+        const ry = (TILT_Y[i % TILT_Y.length] + t * 3) * lean;
+        const rx = TILT_X[i % TILT_X.length] * lean;
         // Under the pointer: the photograph straightens, grows a little and comes to the front.
         const lifted = hovered.current === i;
         el.style.transform = lifted
@@ -155,13 +165,19 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
       window.setTimeout(() => (el.style.transition = ""), 440);
     };
     const els = [...itemRefs.current];
-    const enters = els.map((el, i) => () => {
-      if (!el) return;
-      hovered.current = i;
-      ease(el);
-      update();
+    // Only a mouse resting on a photograph for a few seconds brings it forward.
+    let hoverTimer: number | undefined;
+    const enters = els.map((el, i) => (e: PointerEvent) => {
+      if (!el || e.pointerType !== "mouse") return;
+      window.clearTimeout(hoverTimer);
+      hoverTimer = window.setTimeout(() => {
+        hovered.current = i;
+        ease(el);
+        update();
+      }, HOVER_DELAY);
     });
     const leaves = els.map((el, i) => () => {
+      window.clearTimeout(hoverTimer);
       if (!el || hovered.current !== i) return;
       hovered.current = -1;
       ease(el);
@@ -180,6 +196,7 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
     st.addEventListener("pointermove", onMove);
     st.addEventListener("pointerleave", onLeave);
     return () => {
+      window.clearTimeout(hoverTimer);
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
       reduced.removeEventListener("change", update);
@@ -228,7 +245,7 @@ export function GalleryScroller({ photos, palettes }: { photos: PhotoView[]; pal
         <div
           ref={panelRef}
           className="gs-info"
-          style={{ "--gs-accent": palettes[0]?.accent, "--gs-tint": palettes[0]?.tint } as React.CSSProperties}
+          style={{ "--gs-accent": palettes?.[0]?.accent, "--gs-tint": palettes?.[0]?.tint } as React.CSSProperties}
         >
           <span className="gs-kicker">
             <span ref={countRef} className="frame-no">
