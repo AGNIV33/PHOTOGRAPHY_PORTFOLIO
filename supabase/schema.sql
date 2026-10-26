@@ -269,3 +269,7 @@ alter table public.achievements add column if not exists link_image text not nul
 
 -- Footer: a WhatsApp link next to Instagram and Facebook.
 alter table public.site_settings add column if not exists whatsapp text not null default '';
+
+-- Categories for photos (Black & white, Colour, Street, Nature, ...).
+alter table public.photos add column if not exists tags text[] not null default '{}';
+create index if not exists photos_tags_idx on public.photos using gin (tags);
