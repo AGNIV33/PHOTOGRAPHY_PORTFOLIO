@@ -16,7 +16,10 @@ export const cloudinaryEnv = {
   apiSecret: read("CLOUDINARY_API_SECRET"),
 };
 
-// Optional: lets the dashboard suggest photo categories (Street, Nature, ...) with Claude.
+// Optional: lets the dashboard suggest photo categories (Street, Nature, ...) by looking at
+// each picture. Either a free NVIDIA key (NVIDIA_API_KEY) or an Anthropic key.
+export const nvidiaKey = read("NVIDIA_API_KEY");
+export const nvidiaModel = read("NVIDIA_VISION_MODEL") || "meta/llama-3.2-90b-vision-instruct";
 export const anthropicKey = read("ANTHROPIC_API_KEY");
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);

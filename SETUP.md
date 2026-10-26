@@ -42,3 +42,12 @@ Project → Settings → Environment Variables → add the same 7 values → Red
 4. Put the three values in `.env` (`NEXT_PUBLIC_EMAILJS_SERVICE_ID`, `..._TEMPLATE_ID`, `..._PUBLIC_KEY`)
    and in Vercel -> Settings -> Environment Variables, then redeploy.
 
+   For the designed email, paste `emailjs/contact-message.html` into the template's code editor.
+
+## 6. Photo categories (database step + optional AI)
+1. Supabase -> SQL Editor -> run `supabase/categories.sql` once (adds the `tags` column).
+2. Black & white / colour is detected from the picture itself, no key needed.
+3. Optional, for style categories (Street, Nature, Landscape...): add `NVIDIA_API_KEY` (free,
+   build.nvidia.com -> a vision model -> Get API Key; set `NVIDIA_VISION_MODEL` to change the
+   model) **or** `ANTHROPIC_API_KEY` to `.env` and Vercel, then redeploy.
+4. Dashboard -> **Categories** -> "Categorise photos that have none" fills in all existing photos.

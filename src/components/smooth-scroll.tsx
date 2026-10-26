@@ -18,7 +18,9 @@ export function SmoothScroll() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let instance: Lenis;
     try {
-      instance = new Lenis({ lerp: 0.1, smoothWheel: true });
+      // allowNestedScroll: a box that can scroll on its own (a long text box, a list) scrolls
+      // normally while the pointer is over it.
+      instance = new Lenis({ lerp: 0.1, smoothWheel: true, allowNestedScroll: true });
     } catch {
       return; // never let a scrolling effect break the page
     }

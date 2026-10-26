@@ -3,11 +3,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import sharp from "sharp";
 import { analysisUrl } from "@/lib/cloudinary";
 import { BW, COLOUR, STYLE_TAGS, cleanTags, hasColourTag, withColourTag } from "@/lib/categories";
-import { anthropicKey } from "@/lib/env";
+import { anthropicKey, nvidiaKey, nvidiaModel } from "@/lib/env";
 
 // Works out a photograph's categories.
 // - Black & white or colour: measured from the picture itself (free, no AI needed).
-// - Style (Street, Nature, Landscape, ...): Claude looks at the picture, when an
+// - Style (Street, Nature, Landscape, ...): an image-to-text AI model looks at the picture.
+//   It uses NVIDIA's free endpoint when NVIDIA_API_KEY is set, else Claude when
 //   ANTHROPIC_API_KEY is set. Without a key, the style categories are added by hand.
 
 async function loadBytes(publicId: string) {
@@ -67,8 +68,7 @@ const SCHEMA = {
   additionalProperties: false,
 } as const;
 
-async function suggestStyles(bytes: Buffer): Promise<string[]> {
-  if (!anthropicKey) return [];
+async function suggestStylesClaude(bytes: Buffer): Promise<string[]> {
   const client = new Anthropic({ apiKey: anthropicKey });
   const res = await client.messages.create({
     model: "claude-opus-5-5",
@@ -94,7 +94,52 @@ async function suggestStyles(bytes: Buffer): Promise<string[]> {
   return cleanTags(parsed.categories ?? []).filter((t) => (STYLE_TAGS as readonly string[]).includes(t));
 }
 
-export const aiAvailable = Boolean(anthropicKey);
+// NVIDIA's free vision models (OpenAI-compatible). Inline pictures must stay small (about
+// 180 KB), so the picture is shrunk first.
+async function suggestStylesNvidia(bytes: Buffer): Promise<string[]> {
+  let jpeg = await sharp(bytes).resize(640, 640, { fit: "inside" }).jpeg({ quality: 72 }).toBuffer();
+  if (jpeg.length > 150_000) jpeg = await sharp(bytes).resize(512, 512, { fit: "inside" }).jpeg({ quality: 60 }).toBuffer();
+  const res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${nvidiaKey}`, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      model: nvidiaModel,
+      max_tokens: 60,
+      temperature: 0.1,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text:
+                "This is a photograph from a street and documentary photographer's portfolio. " +
+                `Choose the one to three categories that fit it best, only from this list: ${STYLE_TAGS.join(", ")}. ` +
+                "Street means everyday life in public places. Answer with the category names only, separated by commas.",
+            },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${jpeg.toString("base64")}` } },
+          ],
+        },
+      ],
+    }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`NVIDIA answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  const answer = (json.choices?.[0]?.message?.content ?? "").toLowerCase();
+  // Keep the allowed names that appear in the answer, in the order they were given.
+  return STYLE_TAGS.filter((t) => answer.includes(t.toLowerCase()))
+    .sort((a, b) => answer.indexOf(a.toLowerCase()) - answer.indexOf(b.toLowerCase()))
+    .slice(0, 3);
+}
+
+async function suggestStyles(bytes: Buffer): Promise<string[]> {
+  if (nvidiaKey) return suggestStylesNvidia(bytes);
+  if (anthropicKey) return suggestStylesClaude(bytes);
+  return [];
+}
+
+export const aiAvailable = Boolean(nvidiaKey || anthropicKey);
 
 // The categories for one picture. Never throws: on any trouble it returns what it could work out.
 export async function analyzePhoto(publicId: string, opts: { styles?: boolean } = {}) {
@@ -108,7 +153,7 @@ export async function analyzePhoto(publicId: string, opts: { styles?: boolean } 
   try {
     out.colour = await measureColour(bytes);
   } catch {}
-  if (opts.styles !== false && anthropicKey) {
+  if (opts.styles !== false && aiAvailable) {
     try {
       out.styles = await suggestStyles(bytes);
       out.aiUsed = true;
